@@ -14,9 +14,13 @@ X-URL: http://github.com/Bad-ptr/common-header-mode-line.el
 
 Draws per-frame mode-line and/or header-line and allow to customize per-window header/mode-line.  
 
+[![emacs 24 -Q](screenshots/emacs24Q_th.jpg)](screenshots/emacs24Q.jpg)
+
+
 ## Installation  
 
-Put `common-header-mode-line.el` into a directory that in your emacs `load-path`, 
+Put `common-header-mode-line.el` into a directory that in your emacs `load-path` 
+or do `M-x package-install-file RET common-header-mode-line.el RET`, 
 add the following to your config:  
 
 ```elisp
@@ -113,6 +117,10 @@ add the following to your config:
            )))
 
 ```
+
+Result of the above code:  
+[![emacs 26 custom](screenshots/emacs26custom_th.jpg)](screenshots/emacs26custom.jpg)
+
 
 ## How to contribute  
 
