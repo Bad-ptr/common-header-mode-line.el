@@ -41,35 +41,63 @@ add the following to your config:
 
 
 ```elisp
-    
+
     (with-eval-after-load "common-header-mode-line-autoloads"
       (add-hook
        'after-init-hook
        #'(lambda ()
            (common-mode-line-mode)
-    
+
            (when (fboundp 'tabbar-mode)
              (common-header-line-mode)
              (copy-face 'default 'common-header-line-face)
              (set-face-background 'common-header-line-face "dim gray"))
-    
+
            (copy-face 'common-mode-line-face
                       'common-header-line-active-window-header-line-face)
            (set-face-attribute
             'common-header-line-active-window-header-line-face
             nil :height 0.9)
-    
+
+           (defface common-header-line-inactive-window-header-line-face
+             '((default :inherit common-mode-line-inactive-window-mode-line-face :height 0.8))
+             "Face for inactive per-window header line.")
+           (copy-face 'common-mode-line-face
+                      'common-header-line-inactive-window-header-line-face)
+           (set-face-background
+            'common-header-line-inactive-window-header-line-face
+            (face-background 'mode-line-inactive))
+
+           (defvar-local common-header-line-active-inactive-face-remapping-cookie nil
+             "Cookie used to remap header-line font for inactive windows.")
+
+           (add-hook 'pre-command-hook
+                     #'(lambda ()
+                         (when (and
+                                common-header-line-mode
+                                (string-match-p
+                                 "^\\(windmove-.*\\|.*window.*\\)$"
+                                 (symbol-name this-command)))
+                           (let* ((win (selected-window)))
+                             (with-current-buffer
+                                 (window-buffer win)
+                               (setq-local
+                                common-header-line-active-inactive-face-remapping-cookie
+                                (face-remap-add-relative 'common-header-line-active-window-header-line-face
+                                                         'common-header-line-inactive-window-header-line-face))
+                               (force-window-update win))))))
+
            (setq common-header-line-per-window-format-function
                  #'(lambda (win)
-                     (format-mode-line
-                      '("%e" mode-line-front-space mode-line-mule-info mode-line-client
-                        mode-line-modified mode-line-remote mode-line-frame-identification
-                        mode-line-buffer-identification "   " mode-line-position
-                        (vc-mode vc-mode)
-                        "  " mode-line-misc-info mode-line-end-spaces)
-                      'common-header-line-active-window-header-line-face
-                      win (window-buffer win))))
-    
+                     (when common-header-line-active-inactive-face-remapping-cookie
+                       (face-remap-remove-relative common-header-line-active-inactive-face-remapping-cookie)
+                       (setq-local common-header-line-active-inactive-face-remapping-cookie nil))
+                     '("%e" mode-line-front-space mode-line-mule-info mode-line-client
+                       mode-line-modified mode-line-remote mode-line-frame-identification
+                       mode-line-buffer-identification "   " mode-line-position
+                       (vc-mode vc-mode)
+                       "  " mode-line-misc-info mode-line-end-spaces)))
+
            (setq common-mode-line-update-display-function
                  #'(lambda (display)
                      (let ((buf (cdr (assq 'buf display))))
@@ -90,21 +118,21 @@ add the following to your config:
                          (setq-local mode-line-format nil)
                          (setq-local header-line-format nil)
                          (setq-local buffer-read-only t)))))
-    
+
            (set-face-attribute
             'common-mode-line-active-window-mode-line-face
             nil :height 0.1)
            (set-face-attribute
             'common-mode-line-inactive-window-mode-line-face
             nil :height 0.3)
-    
+
            ;; (set-face-attribute
            ;;  'common-mode-line-active-window-mode-line-face
            ;;  nil :height 0.9)
            ;; (set-face-attribute
            ;;  'common-mode-line-inactive-window-mode-line-face
            ;;  nil :height 0.8)
-    
+
            ;; (setq common-mode-line-per-window-format-function
            ;;       #'(lambda (win)
            ;;           (format-mode-line
