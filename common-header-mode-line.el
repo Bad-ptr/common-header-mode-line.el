@@ -607,6 +607,14 @@
       (setq-local header-line-format
 		  (common-header-line--per-window-format common-header-mode-line--selected-window)))))
 
+(defun common-header-mode-line--update nil
+  (progn
+    (progn
+      (when common-mode-line-mode
+	(common-mode-line--update))
+      (when common-header-line-mode
+	(common-header-line--update)))))
+
 (defun common-header-mode-line--delayed-update
     (&rest args)
   (unless
@@ -614,13 +622,28 @@
     (setq common-header-mode-line--delayed-update-timer
 	  (run-with-idle-timer common-header-mode-line-update-delay nil
 			       #'(lambda nil
-				   (progn
-				     (progn
-				       (when common-mode-line-mode
-					 (common-mode-line--update))
-				       (when common-header-line-mode
-					 (common-header-line--update))))
+				   (common-header-mode-line--update)
 				   (setq common-header-mode-line--delayed-update-timer nil))))))
+
+(defun common-header-mode-line-update-all-windows
+    (&optional all-frames)
+  (interactive "P")
+  (setq all-frames
+	(not
+	 (null all-frames)))
+  (save-excursion
+    (let*
+	((start-win
+	  (selected-window))
+	 (cwin
+	  (next-window start-win 0 all-frames)))
+      (while
+	  (not
+	   (eq cwin start-win))
+	(with-selected-window cwin
+	  (common-header-mode-line--update))
+	(setq cwin
+	      (next-window cwin 0 all-frames))))))
 
 (defun common-mode-line--activate
     (&optional frames)

@@ -344,17 +344,33 @@
                    (common-$*-line--per-window-format
                     common-$@-line--selected-window)))))
 
+ (defun common-$@-line--update ()
+   ($subloop
+    (when common-$*-line-mode
+      (common-$*-line--update))))
+
  (defun common-$@-line--delayed-update (&rest args)
    (unless (timerp common-$@-line--delayed-update-timer)
      (setq common-$@-line--delayed-update-timer
            (run-with-idle-timer
             common-$@-line-update-delay nil
             #'(lambda ()
-                ($subloop
-                 (when common-$*-line-mode
-                   (common-$*-line--update)))
+                (common-$@-line--update)
                 (setq common-$@-line--delayed-update-timer nil))))))
 
+ (defun common-$@-line-update-all-windows (&optional all-frames)
+   (interactive "P")
+   (setq all-frames (not (null all-frames)))
+   (save-excursion
+     (let*
+         ((start-win
+           (selected-window))
+          (cwin
+           (next-window start-win 0 all-frames)))
+       (while (not (eq cwin start-win))
+         (with-selected-window cwin
+           (common-$@-line--update))
+         (setq cwin (next-window cwin 0 all-frames))))))
 
  (defun common-$*-line--activate (&optional frames)
    (unless (listp frames) (setq frames (list frames)))
