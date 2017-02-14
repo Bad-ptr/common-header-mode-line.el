@@ -870,16 +870,28 @@
       nil ad-do-it))
 
 ;;;###autoload
-(define-minor-mode common-mode-line-mode "Toggle the common-mode-line-mode.\nWhen active it draws a mode-line at the bottom(or top) of\nthe frame." :require 'common-header-mode-line-mode :group 'common-header-mode-line-mode :init-value nil :global t
+(define-minor-mode common-mode-line-mode "Toggle the common-mode-line-mode.\nWhen active it draws a mode-line at the bottom(or top) of\nthe frame." :require 'common-header-mode-line :group 'common-header-mode-line :init-value nil :global t
   (if common-mode-line-mode
       (common-mode-line--activate)
     (common-mode-line--deactivate)))
 
 ;;;###autoload
-(define-minor-mode common-header-line-mode "Toggle the common-header-line-mode.\nWhen active it draws a header-line at the bottom(or top) of\nthe frame." :require 'common-header-mode-line-mode :group 'common-header-mode-line-mode :init-value nil :global t
+(define-minor-mode common-header-line-mode "Toggle the common-header-line-mode.\nWhen active it draws a header-line at the bottom(or top) of\nthe frame." :require 'common-header-mode-line :group 'common-header-mode-line :init-value nil :global t
   (if common-header-line-mode
       (common-header-line--activate)
     (common-header-line--deactivate)))
+
+;;;###autoload
+(define-minor-mode common-header-mode-line-mode "Toggle common-header-line-mode nad common-mode-line-mode." :require 'common-header-mode-line :group 'common-header-mode-line :init-value nil :global t
+  (if common-header-mode-line-mode
+      (progn
+	(progn
+	  (common-mode-line-mode 1)
+	  (common-header-line-mode 1)))
+    (progn
+      (progn
+	(common-mode-line-mode -1)
+	(common-header-line-mode -1)))))
 
 (provide 'common-header-mode-line)
 

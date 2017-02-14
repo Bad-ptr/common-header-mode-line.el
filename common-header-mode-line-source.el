@@ -476,13 +476,26 @@
     "Toggle the common-$*-line-mode.
 When active it draws a $*-line at the bottom(or top) of
 the frame."
-    :require 'common-$@-line-mode
-    :group   'common-$@-line-mode
+    :require 'common-$@-line
+    :group   'common-$@-line
     :init-value nil
     :global     t
     (if common-$*-line-mode
         (common-$*-line--activate)
       (common-$*-line--deactivate))))
+
+ (:autoload
+  (define-minor-mode common-$@-line-mode
+    "Toggle common-$0-line-mode nad common-$1-line-mode."
+    :require 'common-$@-line
+    :group 'common-$@-line
+    :init-value nil
+    :global t
+    (if common-$@-line-mode
+        ($subloop
+         (common-$*-line-mode 1))
+      ($subloop
+       (common-$*-line-mode -1)))))
 
  (provide 'common-$@-line)
 
