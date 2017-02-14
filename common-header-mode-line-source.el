@@ -422,27 +422,28 @@
      (unless (window-with-parameter 'common-$*-line-window t)
        (setq all-frames t))
      (when all-frames
-       (kill-buffer (common-$*-line--get-create-buffer))
-       (remove-hook 'post-command-hook #'common-$@-line--delayed-update)
-       (setq face-remapping-alist
-             (delq
-              (assq '$*-line
-                    face-remapping-alist)
-              face-remapping-alist))
-       ($eval
-        (when (eq '$1 '$*)
-          `(setq face-remapping-alist
-                 (delq
-                  (assq '$1-line-inactive
-                        face-remapping-alist)
-                  face-remapping-alist))))
-       (dolist (w (window-list))
-         (with-current-buffer (window-buffer w)
-           (setq $*-line-format common-$*-line--saved-emacs-$*-line-format)))
-       (ad-deactivate #'delete-window)
-       ($eval
-        (when (eq '$1 '$*)
-          `(ad-deactivate #'force-mode-line-update))))))
+       (progn
+         (ad-deactivate #'delete-window)
+         ($eval
+          (when (eq '$1 '$*)
+            `(ad-deactivate #'force-mode-line-update)))
+         (remove-hook 'post-command-hook #'common-$@-line--delayed-update)
+         (kill-buffer (common-$*-line--get-create-buffer))
+         (setq-default face-remapping-alist
+                       (delq
+                        (assq '$*-line
+                              (default-value 'face-remapping-alist))
+                        (default-value 'face-remapping-alist)))
+         ($eval
+          (when (eq '$1 '$*)
+            `(setq-default face-remapping-alist
+                           (delq
+                            (assq '$1-line-inactive
+                                  (default-value 'face-remapping-alist))
+                            (default-value 'face-remapping-alist)))))
+         (dolist (b (buffer-list))
+           (with-current-buffer b
+             (setq $*-line-format common-$*-line--saved-emacs-$*-line-format)))))))
 
  (defadvice force-mode-line-update
      (after common-$@-line--delayed-update-adv)

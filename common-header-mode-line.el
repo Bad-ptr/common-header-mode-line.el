@@ -752,36 +752,33 @@
 	    all-frames t))
     (dolist
 	(frame frames)
-      (setq win
-	    (window-with-parameter 'common-mode-line-window t frame))
-      (when
-	  (window-live-p win)
-	(set-window-dedicated-p win nil)
-	(delete-window win))
-      (set-frame-parameter frame 'common-mode-line-window nil))
+      (common-mode-line--kill-display
+       (frame-parameter frame 'common-mode-line-display)))
     (unless
 	(window-with-parameter 'common-mode-line-window t)
       (setq all-frames t))
     (when all-frames
-      (kill-buffer
-       (common-mode-line--get-create-buffer))
-      (remove-hook 'post-command-hook #'common-header-mode-line--delayed-update)
-      (setq face-remapping-alist
-	    (delq
-	     (assq 'mode-line face-remapping-alist)
-	     face-remapping-alist))
-      (setq face-remapping-alist
-	    (delq
-	     (assq 'mode-line-inactive face-remapping-alist)
-	     face-remapping-alist))
-      (dolist
-	  (w
-	   (window-list))
-	(with-current-buffer
-	    (window-buffer w)
-	  (setq mode-line-format common-mode-line--saved-emacs-mode-line-format)))
-      (ad-deactivate #'delete-window)
-      (ad-deactivate #'force-mode-line-update))))
+      (progn
+	(ad-deactivate #'delete-window)
+	(ad-deactivate #'force-mode-line-update)
+	(remove-hook 'post-command-hook #'common-header-mode-line--delayed-update)
+	(kill-buffer
+	 (common-mode-line--get-create-buffer))
+	(setq-default face-remapping-alist
+		      (delq
+		       (assq 'mode-line
+			     (default-value 'face-remapping-alist))
+		       (default-value 'face-remapping-alist)))
+	(setq-default face-remapping-alist
+		      (delq
+		       (assq 'mode-line-inactive
+			     (default-value 'face-remapping-alist))
+		       (default-value 'face-remapping-alist)))
+	(dolist
+	    (b
+	     (buffer-list))
+	  (with-current-buffer b
+	    (setq mode-line-format common-mode-line--saved-emacs-mode-line-format)))))))
 
 (defun common-header-line--deactivate
     (&optional frames)
@@ -803,33 +800,29 @@
 	    all-frames t))
     (dolist
 	(frame frames)
-      (setq win
-	    (window-with-parameter 'common-header-line-window t frame))
-      (when
-	  (window-live-p win)
-	(set-window-dedicated-p win nil)
-	(delete-window win))
-      (set-frame-parameter frame 'common-header-line-window nil))
+      (common-header-line--kill-display
+       (frame-parameter frame 'common-header-line-display)))
     (unless
 	(window-with-parameter 'common-header-line-window t)
       (setq all-frames t))
     (when all-frames
-      (kill-buffer
-       (common-header-line--get-create-buffer))
-      (remove-hook 'post-command-hook #'common-header-mode-line--delayed-update)
-      (setq face-remapping-alist
-	    (delq
-	     (assq 'header-line face-remapping-alist)
-	     face-remapping-alist))
-      nil
-      (dolist
-	  (w
-	   (window-list))
-	(with-current-buffer
-	    (window-buffer w)
-	  (setq header-line-format common-header-line--saved-emacs-header-line-format)))
-      (ad-deactivate #'delete-window)
-      nil)))
+      (progn
+	(ad-deactivate #'delete-window)
+	nil
+	(remove-hook 'post-command-hook #'common-header-mode-line--delayed-update)
+	(kill-buffer
+	 (common-header-line--get-create-buffer))
+	(setq-default face-remapping-alist
+		      (delq
+		       (assq 'header-line
+			     (default-value 'face-remapping-alist))
+		       (default-value 'face-remapping-alist)))
+	nil
+	(dolist
+	    (b
+	     (buffer-list))
+	  (with-current-buffer b
+	    (setq header-line-format common-header-line--saved-emacs-header-line-format)))))))
 
 (defadvice force-mode-line-update
     (after common-header-mode-line--delayed-update-adv)
