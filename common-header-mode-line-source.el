@@ -191,9 +191,11 @@
               (face-remap-add-relative 'default 'common-$*-line-face)
               (current-buffer))))))
 
- (defun common-$*-line--kill-buffer ()
-   (when (buffer-live-p common-$*-line--buffer)
-     (kill-buffer common-$*-line-buffer)))
+ (defun common-$*-line--kill-buffer (&optional buf)
+   (unless buf
+     (setq buf common-$*-line--buffer))
+   (when (buffer-live-p buf)
+     (kill-buffer buf)))
 
 
  (defun common-$@-line--init-window-with-buffer (win buf)
@@ -243,8 +245,9 @@
        (setq win (common-$*-line--create-window frame)))
      win))
 
- (defun common-$*-line--kill-window (&optional frame)
-   (let ((win (frame-parameter frame 'common-$*-line-window))
+ (defun common-$*-line--kill-window (&optional frame win)
+   (let ((win (or (and (window-live-p win) win)
+                  (frame-parameter frame 'common-$*-line-window)))
          (common-$@-line--inhibit-delete-window-advice t))
      (when (window-live-p win)
        (delete-window win))
@@ -256,7 +259,7 @@
      (let ((winc (assq 'win display))
            (bufc (assq 'buf display))
            (frame (cdr (assq 'frame display))))
-       (common-$*-line--kill-window (cdr winc))
+       (common-$*-line--kill-window frame (cdr winc))
        (common-$*-line--kill-buffer (cdr bufc))
        (setcdr winc nil)
        (setcdr bufc nil)

@@ -209,15 +209,21 @@
 	     (face-remap-add-relative 'default 'common-header-line-face)
 	     (current-buffer))))))
 
-(defun common-mode-line--kill-buffer nil
+(defun common-mode-line--kill-buffer
+    (&optional buf)
+  (unless buf
+    (setq buf common-mode-line--buffer))
   (when
-      (buffer-live-p common-mode-line--buffer)
-    (kill-buffer common-mode-line-buffer)))
+      (buffer-live-p buf)
+    (kill-buffer buf)))
 
-(defun common-header-line--kill-buffer nil
+(defun common-header-line--kill-buffer
+    (&optional buf)
+  (unless buf
+    (setq buf common-header-line--buffer))
   (when
-      (buffer-live-p common-header-line--buffer)
-    (kill-buffer common-header-line-buffer)))
+      (buffer-live-p buf)
+    (kill-buffer buf)))
 
 (defun common-header-mode-line--init-window-with-buffer
     (win buf)
@@ -333,10 +339,14 @@
     win))
 
 (defun common-mode-line--kill-window
-    (&optional frame)
+    (&optional frame win)
   (let
       ((win
-	(frame-parameter frame 'common-mode-line-window))
+	(or
+	 (and
+	  (window-live-p win)
+	  win)
+	 (frame-parameter frame 'common-mode-line-window)))
        (common-header-mode-line--inhibit-delete-window-advice t))
     (when
 	(window-live-p win)
@@ -344,10 +354,14 @@
     (set-frame-parameter frame 'common-mode-line-window nil)))
 
 (defun common-header-line--kill-window
-    (&optional frame)
+    (&optional frame win)
   (let
       ((win
-	(frame-parameter frame 'common-header-line-window))
+	(or
+	 (and
+	  (window-live-p win)
+	  win)
+	 (frame-parameter frame 'common-header-line-window)))
        (common-header-mode-line--inhibit-delete-window-advice t))
     (when
 	(window-live-p win)
@@ -365,8 +379,8 @@
 	 (frame
 	  (cdr
 	   (assq 'frame display))))
-      (common-mode-line--kill-window
-       (cdr winc))
+      (common-mode-line--kill-window frame
+				     (cdr winc))
       (common-mode-line--kill-buffer
        (cdr bufc))
       (setcdr winc nil)
@@ -385,8 +399,8 @@
 	 (frame
 	  (cdr
 	   (assq 'frame display))))
-      (common-header-line--kill-window
-       (cdr winc))
+      (common-header-line--kill-window frame
+				       (cdr winc))
       (common-header-line--kill-buffer
        (cdr bufc))
       (setcdr winc nil)
