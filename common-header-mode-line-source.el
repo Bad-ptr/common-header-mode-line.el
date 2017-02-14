@@ -426,12 +426,12 @@
        (setq all-frames t))
      (when all-frames
        (progn
-         (ad-deactivate #'delete-window)
-         ($eval
-          (when (eq '$1 '$*)
-            `(ad-deactivate #'force-mode-line-update)))
-         (remove-hook 'post-command-hook #'common-$@-line--delayed-update)
-         (kill-buffer (common-$*-line--get-create-buffer))
+         (unless (or common-$0-line-mode common-$1-line-mode)
+           (ad-deactivate #'delete-window)
+           ($eval
+            (when (eq '$1 '$*)
+              `(ad-deactivate #'force-mode-line-update)))
+           (remove-hook 'post-command-hook #'common-$@-line--delayed-update))
          (setq-default face-remapping-alist
                        (delq
                         (assq '$*-line

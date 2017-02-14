@@ -773,11 +773,11 @@
       (setq all-frames t))
     (when all-frames
       (progn
-	(ad-deactivate #'delete-window)
-	(ad-deactivate #'force-mode-line-update)
-	(remove-hook 'post-command-hook #'common-header-mode-line--delayed-update)
-	(kill-buffer
-	 (common-mode-line--get-create-buffer))
+	(unless
+	    (or common-header-line-mode common-mode-line-mode)
+	  (ad-deactivate #'delete-window)
+	  (ad-deactivate #'force-mode-line-update)
+	  (remove-hook 'post-command-hook #'common-header-mode-line--delayed-update))
 	(setq-default face-remapping-alist
 		      (delq
 		       (assq 'mode-line
@@ -821,11 +821,11 @@
       (setq all-frames t))
     (when all-frames
       (progn
-	(ad-deactivate #'delete-window)
-	nil
-	(remove-hook 'post-command-hook #'common-header-mode-line--delayed-update)
-	(kill-buffer
-	 (common-header-line--get-create-buffer))
+	(unless
+	    (or common-header-line-mode common-mode-line-mode)
+	  (ad-deactivate #'delete-window)
+	  nil
+	  (remove-hook 'post-command-hook #'common-header-mode-line--delayed-update))
 	(setq-default face-remapping-alist
 		      (delq
 		       (assq 'header-line
