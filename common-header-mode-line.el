@@ -149,19 +149,15 @@
 
 (defvar common-header-mode-line--selected-window nil "Used to track current window.")
 
-(unless
-    (facep 'common-mode-line-face)
-  (defface common-mode-line-face
-    '((default :inherit mode-line))
-    "Face for common mode-line.")
-  (copy-face 'mode-line 'common-mode-line-face))
+(defvar common-header-mode-line--inhibit-delete-window-advice nil "Used to locally allow deleting any window.")
 
-(unless
-    (facep 'common-header-line-face)
-  (defface common-header-line-face
-    '((default :inherit mode-line))
-    "Face for common header-line.")
-  (copy-face 'header-line 'common-header-line-face))
+(defface common-mode-line-face
+  '((default :inherit mode-line))
+  "Face for common mode-line.")
+
+(defface common-header-line-face
+  '((default :inherit header-line))
+  "Face for common header-line.")
 
 (defface common-mode-line-inactive-window-mode-line-face
   '((default :inherit mode-line-inactive :height 0.3))
@@ -340,7 +336,8 @@
     (&optional frame)
   (let
       ((win
-	(frame-parameter frame 'common-mode-line-window)))
+	(frame-parameter frame 'common-mode-line-window))
+       (common-header-mode-line--inhibit-delete-window-advice t))
     (when
 	(window-live-p win)
       (delete-window win))
@@ -350,7 +347,8 @@
     (&optional frame)
   (let
       ((win
-	(frame-parameter frame 'common-header-line-window)))
+	(frame-parameter frame 'common-header-line-window))
+       (common-header-mode-line--inhibit-delete-window-advice t))
     (when
 	(window-live-p win)
       (delete-window win))
@@ -812,11 +810,13 @@
 (defadvice delete-window
     (around common-header-mode-line--delete-window-adv)
   (if
-      (not
-       (common-header-mode-line--can-delete-window-p
-	(or
-	 (ad-get-arg 0)
-	 (selected-window))))
+      (and
+       (not common-header-mode-line--inhibit-delete-window-advice)
+       (not
+	(common-header-mode-line--can-delete-window-p
+	 (or
+	  (ad-get-arg 0)
+	  (selected-window)))))
       nil ad-do-it))
 
 ;;;###autoload

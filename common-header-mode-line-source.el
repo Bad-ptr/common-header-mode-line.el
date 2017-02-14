@@ -149,12 +149,13 @@
  (defvar common-$@-line--selected-window nil
    "Used to track current window.")
 
+ (defvar common-$@-line--inhibit-delete-window-advice nil
+   "Used to locally allow deleting any window.")
 
- (unless (facep 'common-$*-line-face)
-   (defface common-$*-line-face
-     '((default :inherit $1-line))
-     "Face for common $*-line.")
-   (copy-face '$*-line 'common-$*-line-face))
+
+ (defface common-$*-line-face
+   '((default :inherit $*-line))
+   "Face for common $*-line.")
 
  (defface common-$1-line-inactive-window-$1-line-face
    '((default :inherit $1-line-inactive :height 0.3))
@@ -243,7 +244,8 @@
      win))
 
  (defun common-$*-line--kill-window (&optional frame)
-   (let ((win (frame-parameter frame 'common-$*-line-window)))
+   (let ((win (frame-parameter frame 'common-$*-line-window))
+         (common-$@-line--inhibit-delete-window-advice t))
      (when (window-live-p win)
        (delete-window win))
      (set-frame-parameter frame 'common-$*-line-window nil)))
@@ -395,11 +397,8 @@
        (setq frames (frame-list)
              all-frames t))
      (dolist (frame frames)
-       (setq win (window-with-parameter 'common-$*-line-window t frame))
-       (when (window-live-p win)
-         (set-window-dedicated-p win nil)
-         (delete-window win))
-       (set-frame-parameter frame 'common-$*-line-window nil))
+       (common-$*-line--kill-display
+        (frame-parameter frame 'common-$*-line-display)))
      (unless (window-with-parameter 'common-$*-line-window t)
        (setq all-frames t))
      (when all-frames
@@ -440,10 +439,11 @@
 
  (defadvice delete-window
      (around common-$@-line--delete-window-adv)
-   (if (not
-        (common-$@-line--can-delete-window-p
-         (or (ad-get-arg 0)
-             (selected-window))))
+   (if (and
+        (not common-$@-line--inhibit-delete-window-advice)
+        (not (common-$@-line--can-delete-window-p
+              (or (ad-get-arg 0)
+                  (selected-window)))))
        nil
      ad-do-it))
 
