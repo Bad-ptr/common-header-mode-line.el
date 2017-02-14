@@ -356,35 +356,43 @@
 
 (defun common-mode-line--kill-display-function
     (display)
-  (let
-      ((winc
-	(assq 'win display))
-       (bufc
-	(assq 'buf display)))
-    (common-mode-line--kill-window
-     (cdr winc))
-    (common-mode-line--kill-buffer
-     (cdr bufc))
-    (setcdr winc nil)
-    (setcdr bufc nil)
-    (set-frame-parameter frame 'common-mode-line-display display)
-    display))
+  (when display
+    (let
+	((winc
+	  (assq 'win display))
+	 (bufc
+	  (assq 'buf display))
+	 (frame
+	  (cdr
+	   (assq 'frame display))))
+      (common-mode-line--kill-window
+       (cdr winc))
+      (common-mode-line--kill-buffer
+       (cdr bufc))
+      (setcdr winc nil)
+      (setcdr bufc nil)
+      (set-frame-parameter frame 'common-mode-line-display nil)
+      display)))
 
 (defun common-header-line--kill-display-function
     (display)
-  (let
-      ((winc
-	(assq 'win display))
-       (bufc
-	(assq 'buf display)))
-    (common-header-line--kill-window
-     (cdr winc))
-    (common-header-line--kill-buffer
-     (cdr bufc))
-    (setcdr winc nil)
-    (setcdr bufc nil)
-    (set-frame-parameter frame 'common-header-line-display display)
-    display))
+  (when display
+    (let
+	((winc
+	  (assq 'win display))
+	 (bufc
+	  (assq 'buf display))
+	 (frame
+	  (cdr
+	   (assq 'frame display))))
+      (common-header-line--kill-window
+       (cdr winc))
+      (common-header-line--kill-buffer
+       (cdr bufc))
+      (setcdr winc nil)
+      (setcdr bufc nil)
+      (set-frame-parameter frame 'common-header-line-display nil)
+      display)))
 
 (defun common-mode-line--kill-display
     (display)

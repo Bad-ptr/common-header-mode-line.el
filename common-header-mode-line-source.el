@@ -252,15 +252,17 @@
 
 
  (defun common-$*-line--kill-display-function (display)
-   (let ((winc (assq 'win display))
-         (bufc (assq 'buf display)))
-     (common-$*-line--kill-window (cdr winc))
-     (common-$*-line--kill-buffer (cdr bufc))
-     (setcdr winc nil)
-     (setcdr bufc nil)
-     (set-frame-parameter frame 'common-$*-line-display
-                          display)
-     display))
+   (when display
+     (let ((winc (assq 'win display))
+           (bufc (assq 'buf display))
+           (frame (cdr (assq 'frame display))))
+       (common-$*-line--kill-window (cdr winc))
+       (common-$*-line--kill-buffer (cdr bufc))
+       (setcdr winc nil)
+       (setcdr bufc nil)
+       (set-frame-parameter frame 'common-$*-line-display
+                            nil)
+       display)))
 
  (defun common-$*-line--kill-display (display)
    (funcall common-$*-line-kill-display-function display))
