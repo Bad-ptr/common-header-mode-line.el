@@ -675,11 +675,19 @@
 	       '(common-mode-line-window . writable))
   (add-to-list 'window-persistent-parameters
 	       '(no-other-window . writable))
-  (add-to-list 'face-remapping-alist
-	       '(mode-line common-mode-line-active-window-mode-line-face))
+  (unless
+      (assq 'mode-line
+	    (default-value 'face-remapping-alist))
+    (push
+     '(mode-line common-mode-line-active-window-mode-line-face)
+     (default-value 'face-remapping-alist)))
   (progn
-    (add-to-list 'face-remapping-alist
-		 '(mode-line-inactive common-mode-line-inactive-window-mode-line-face))
+    (unless
+	(assq 'mode-line-inactive
+	      (default-value 'face-remapping-alist))
+      (push
+       '(mode-line-inactive common-mode-line-inactive-window-mode-line-face)
+       (default-value 'face-remapping-alist)))
     (ad-activate #'force-mode-line-update))
   (ad-activate #'delete-window)
   (add-hook 'post-command-hook #'common-header-mode-line--delayed-update))
@@ -714,8 +722,12 @@
 	       '(common-header-line-window . writable))
   (add-to-list 'window-persistent-parameters
 	       '(no-other-window . writable))
-  (add-to-list 'face-remapping-alist
-	       '(header-line common-header-line-active-window-header-line-face))
+  (unless
+      (assq 'header-line
+	    (default-value 'face-remapping-alist))
+    (push
+     '(header-line common-header-line-active-window-header-line-face)
+     (default-value 'face-remapping-alist)))
   nil
   (ad-activate #'delete-window)
   (add-hook 'post-command-hook #'common-header-mode-line--delayed-update))

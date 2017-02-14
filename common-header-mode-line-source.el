@@ -392,14 +392,16 @@
    (add-to-list 'window-persistent-parameters
                 '(no-other-window . writable))
 
-   (add-to-list 'face-remapping-alist
-                '($*-line common-$*-line-active-window-$*-line-face))
+   (unless (assq '$*-line (default-value 'face-remapping-alist))
+     (push '($*-line common-$*-line-active-window-$*-line-face)
+           (default-value 'face-remapping-alist)))
 
    ($eval
     (when (eq '$1 '$*)
       `(progn
-         (add-to-list 'face-remapping-alist
-                      '($1-line-inactive common-$1-line-inactive-window-$1-line-face))
+         (unless (assq '$1-line-inactive (default-value 'face-remapping-alist))
+           (push '($1-line-inactive common-$1-line-inactive-window-$1-line-face)
+                 (default-value 'face-remapping-alist)))
          (ad-activate #'force-mode-line-update))))
    (ad-activate #'delete-window)
    (add-hook 'post-command-hook #'common-$@-line--delayed-update))
