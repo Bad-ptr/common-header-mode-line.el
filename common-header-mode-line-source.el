@@ -76,7 +76,7 @@
 ;; (common-$0-line-mode)
 ;; (common-$1-line-mode)
 
-;; M-x customize-group RET common-heade-$@-line RET
+;; M-x customize-group RET common-header-$@-line RET
 ;; M-x customize-group RET common-$0-line RET
 ;; M-x customize-group RET common-$1-line RET
 
