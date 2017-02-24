@@ -56,11 +56,16 @@ add the following to your config:
               '((default :inherit default)))
              (set-face-background 'common-header-line-face "dim gray"))
 
+           ;; (set-face-attribute 'common-mode-line-face nil :height 113)
+
            (face-spec-reset-face 'common-header-line-active-window-header-line-face)
 
            (face-spec-set
             'common-header-line-active-window-header-line-face
-            '((default :inherit default :height 0.9)))
+            '((default :inherit mode-line :height 100)))
+           ;; (set-face-attribute
+           ;;  'common-header-line-active-window-header-line-face
+           ;;  nil :height 80)
            (set-face-background
             'common-header-line-active-window-header-line-face
             (face-background 'mode-line))
@@ -88,7 +93,7 @@ add the following to your config:
                                 (or common-header-line-mode common-mode-line-mode)
                                 (symbolp this-command)
                                 (string-match-p
-                                 "^\\(windmove-.*\\|.*window.*\\|.*mouse.*\\)$"
+                                 "^\\(windmove-.*\\|.*window.*\\|.*mouse.*\\|.*buffer.*\\)$"
                                  (symbol-name this-command)))
                            (let* ((win (selected-window)))
                              (with-current-buffer
