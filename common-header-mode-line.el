@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017 Constantin Kulikov
 ;;
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
-;; Version: 0.2
+;; Version: 0.3
 ;; Package-Requires: ()
 ;; Date: 2017/01/29 09:05:26
 ;; License: GPL either version 3 or any later version
@@ -40,7 +40,7 @@
 ;; (common-header-line-mode)
 ;; (common-mode-line-mode)
 
-;; M-x customize-group RET common-heade-header-mode-line RET
+;; M-x customize-group RET common-header-header-mode-line RET
 ;; M-x customize-group RET common-header-line RET
 ;; M-x customize-group RET common-mode-line RET
 

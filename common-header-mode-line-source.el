@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017 Constantin Kulikov
 ;;
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
-;; Version: 0.2
+;; Version: 0.3
 ;; Package-Requires: ()
 ;; Date: 2017/01/29 09:05:26
 ;; License: GPL either version 3 or any later version
@@ -39,7 +39,7 @@
 ;; Copyright (C) 2017 Constantin Kulikov
 ;;
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
-;; Version: 0.2
+;; Version: 0.3
 ;; Package-Requires: ()
 ;; Date: 2017/01/29 09:05:26
 ;; License: GPL either version 3 or any later version
