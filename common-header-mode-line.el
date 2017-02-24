@@ -174,6 +174,8 @@
 (defun common-header-mode-line--init-buffer
     (b)
   (with-current-buffer b
+    (jit-lock-mode -1)
+    (font-lock-mode -1)
     (buffer-disable-undo)
     (setq-local header-line-format nil)
     (setq-local mode-line-format nil)

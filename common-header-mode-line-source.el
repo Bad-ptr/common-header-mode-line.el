@@ -168,6 +168,8 @@
 
  (defun common-$@-line--init-buffer (b)
    (with-current-buffer b
+     (jit-lock-mode -1)
+     (font-lock-mode -1)
      (buffer-disable-undo)
      (setq-local $0-line-format nil)
      (setq-local $1-line-format nil)
