@@ -158,11 +158,11 @@
    "Face for common $*-line.")
 
  (defface common-$1-line-inactive-window-$1-line-face
-   '((default :inherit $1-line-inactive :height 0.3))
+   '((default :inherit $1-line-inactive :height 5))
    "Face to use for per-window $1-line when window is inactive.")
 
  (defface common-$*-line-active-window-$*-line-face
-   '((default :inherit $*-line :height 0.3))
+   '((default :inherit $*-line :height 3))
    "Face to use for per-window $*-line when window is active.")
 
 

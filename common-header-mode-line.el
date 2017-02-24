@@ -160,15 +160,15 @@
   "Face for common header-line.")
 
 (defface common-mode-line-inactive-window-mode-line-face
-  '((default :inherit mode-line-inactive :height 0.3))
+  '((default :inherit mode-line-inactive :height 5))
   "Face to use for per-window mode-line when window is inactive.")
 
 (defface common-mode-line-active-window-mode-line-face
-  '((default :inherit mode-line :height 0.3))
+  '((default :inherit mode-line :height 3))
   "Face to use for per-window mode-line when window is active.")
 
 (defface common-header-line-active-window-header-line-face
-  '((default :inherit header-line :height 0.3))
+  '((default :inherit header-line :height 3))
   "Face to use for per-window header-line when window is active.")
 
 (defun common-header-mode-line--init-buffer
