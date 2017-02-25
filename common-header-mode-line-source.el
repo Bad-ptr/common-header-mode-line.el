@@ -4,10 +4,8 @@
 ;;
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
 ;; Version: 0.3
-;; Package-Requires: ()
 ;; Date: 2017/01/29 09:05:26
 ;; License: GPL either version 3 or any later version
-;; Keywords: mode-line, header-line, convenience, frames, windows
 ;; X-URL: http://github.com/Bad-ptr/common-header-mode-line.el
 
 ;;; License:
@@ -202,7 +200,7 @@
 
  (defun common-$@-line--init-buffer (b)
    (with-current-buffer b
-     (jit-lock-mode -1)
+     (jit-lock-mode nil)
      (font-lock-mode -1)
      (buffer-disable-undo)
      (setq-local $0-line-format nil)
