@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017 Constantin Kulikov
 ;;
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
-;; Version: 0.3
+;; Version: 0.4
 ;; Date: 2017/01/29 09:05:26
 ;; License: GPL either version 3 or any later version
 ;; X-URL: http://github.com/Bad-ptr/common-header-mode-line.el
@@ -37,7 +37,7 @@
 ;; Copyright (C) 2017 Constantin Kulikov
 ;;
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
-;; Version: 0.3
+;; Version: 0.4
 ;; Package-Requires: ()
 ;; Date: 2017/01/29 09:05:26
 ;; License: GPL either version 3 or any later version
