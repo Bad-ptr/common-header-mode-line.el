@@ -19,26 +19,58 @@ Draws per-frame mode-line and/or header-line and allow to customize per-window h
 
 ## Installation  
 
-Put `common-header-mode-line.el` into a directory that in your emacs `load-path` 
-or do `M-x package-install-file RET common-header-mode-line.el RET`, 
-add the following to your config:  
+```shell
+
+    git clone git@github.com:Bad-ptr/common-header-mode-line.el.git
+    cd common-header-mode-line.el
+    make package
+
+```
+
+This will create a tar file in the `common-header-mode-line.el/pkg/` directory.  
+Or you can download a [release](https://github.com/Bad-ptr/common-header-mode-line.el/releases).  
+
+Then start emacs and `M-x package-install-file RET path/to/common-header-mode-line-{version}.tar RET`.  
+
+Put the following into your emacs config:
 
 ```elisp
 
-    (require 'common-header-mode-line)
-    (common-mode-line-mode)
-    (common-header-line-mode)
+    (with-eval-after-load "common-header-mode-line-autoloads"
+      (common-mode-line-mode)
+      (common-header-line-mode))
 
 ```
 
 ## How to use  
 
-`M-x customize-group RET common-header-mode-line RET`  
+```elisp
 
-`M-x customize-group RET common-mode-line RET`  
+M-x customize-group RET common-header-mode-line RET
 
-`M-x customize-group RET common-header-line RET`  
+M-x customize-group RET common-mode-line RET
 
+M-x customize-group RET common-header-line RET
+
+M-x customize-group RET per-window-header-mode-line RET
+
+M-x customize-group RET per-window-mode-line RET
+
+M-x customize-group RET per-window-header-line RET
+
+M-x customize-group RET per-frame-header-mode-line RET
+
+M-x customize-group RET per-frame-mode-line RET
+
+M-x customize-group RET per-frame-header-line RET
+
+```
+
+Activating the `common-header-mode-line-mode` is equivalent to activating 
+`common-header-line-mode` and `common-mode-line-mode`  which is equivalent to 
+activating `per-frame-header-mode-line-mode` and `per-window-header-mode-line-mode` 
+which is equivalent to activating `per-frame-header-line-mode`, `per-frame-mode-line-mode`, 
+`per-window-header-line-mode` and `per-window-mode-line-mode`.  
 
 ```elisp
 
@@ -46,96 +78,39 @@ add the following to your config:
       (add-hook
        'after-init-hook
        #'(lambda ()
-           (common-mode-line-mode)
+           (common-header-mode-line-mode 1)
 
+           (let ((def-height (face-attribute 'default :height)))
+             (set-face-attribute
+              'per-window-header-line-active-face nil
+              :height (ceiling (* 0.9 def-height)))
 
-           (when (fboundp 'tabbar-mode)
-             (common-header-line-mode)
-             (face-spec-set
-              'common-header-line-face
-              '((default :inherit default)))
-             (set-face-background 'common-header-line-face "dim gray"))
+             (set-face-attribute
+              'per-window-header-line-inactive-face nil
+              :height (floor (* 0.7 def-height))))
 
-           ;; (set-face-attribute 'common-mode-line-face nil :height 113)
+           ;; (set-face-background
+           ;;  'per-window-header-line-active-face
+           ;;  (face-background 'mode-line))
 
-           (face-spec-reset-face 'common-header-line-active-window-header-line-face)
+           ;; (set-face-background
+           ;;  'per-frame-header-line-inactive-face
+           ;;  (face-background 'mode-line-inactive))
 
-           (face-spec-set
-            'common-header-line-active-window-header-line-face
-            '((default :inherit mode-line :height 100)))
-           ;; (set-face-attribute
-           ;;  'common-header-line-active-window-header-line-face
-           ;;  nil :height 80)
-           (set-face-background
-            'common-header-line-active-window-header-line-face
-            (face-background 'mode-line))
-
-
-           (face-spec-set 'common-header-line-inactive-window-header-line-face
-                          '((default :inherit default :height 0.8)))
-           (set-face-background
-            'common-header-line-inactive-window-header-line-face
-            (face-background 'mode-line-inactive))
-
-           (face-spec-reset-face 'header-line)
-           (face-spec-set
-            'header-line
-            '((default :inherit common-header-line-inactive-window-header-line-face)))
-
-
-           (defvar-local common-header-line-active-inactive-face-remapping-cookie nil
-             "Cookie used to remap header-line font for inactive windows.")
-
-
-           (add-hook 'pre-command-hook
-                     #'(lambda ()
-                         (when (and
-                                (or common-header-line-mode common-mode-line-mode)
-                                (symbolp this-command)
-                                (string-match-p
-                                 "^\\(windmove-.*\\|.*window.*\\|.*mouse.*\\|.*buffer.*\\)$"
-                                 (symbol-name this-command)))
-                           (let* ((win (selected-window)))
-                             (with-current-buffer
-                                 (window-buffer win)
-                               (when common-header-line-active-inactive-face-remapping-cookie
-                                 (face-remap-remove-relative common-header-line-active-inactive-face-remapping-cookie)
-                                 (setq-local common-header-line-active-inactive-face-remapping-cookie nil)))
-                             (force-window-update win)))))
-
-           (add-hook 'common-header-line-mode
-                     #'(lambda ()
-                         (unless common-header-line-mode
-                           (dolist (buf (buffer-list))
-                             (with-current-buffer buf
-                               (when common-header-line-active-inactive-face-remapping-cookie
-                                 (face-remap-remove-relative common-header-line-active-inactive-face-remapping-cookie)
-                                 (setq-local common-header-line-active-inactive-face-remapping-cookie nil)))))))
-
-           (add-hook 'after-make-frame-functions
-                     #'(lambda (frame)
-                         (when (or common-mode-line-mode common-header-line-mode)
-                           (face-spec-recalc 'header-line frame))))
-
-
-           (setq common-header-line-per-window-format-function
+           (setq per-window-header-line-format-function
                  #'(lambda (win)
-                     (with-current-buffer (window-buffer win)
-                       (when common-header-line-active-inactive-face-remapping-cookie
-                         (face-remap-remove-relative common-header-line-active-inactive-face-remapping-cookie)
-                         (setq-local common-header-line-active-inactive-face-remapping-cookie nil))
-                       (setq-local
-                        common-header-line-active-inactive-face-remapping-cookie
-                        (face-remap-add-relative 'header-line
-                                                 'common-header-line-active-window-header-line-face))
-                       (face-remap-reset-base 'header-line))
-                     '("%e" mode-line-front-space mode-line-mule-info mode-line-client
-                       mode-line-modified mode-line-remote mode-line-frame-identification
-                       mode-line-buffer-identification "   " mode-line-position
-                       (vc-mode vc-mode)
-                       "  " mode-line-misc-info mode-line-end-spaces)))
+                     (let ((frmt '("%e" mode-line-front-space mode-line-mule-info mode-line-client
+                                   mode-line-modified mode-line-remote mode-line-frame-identification
+                                   mode-line-buffer-identification "   " mode-line-position
+                                   (vc-mode vc-mode)
+                                   "  " mode-line-misc-info mode-line-end-spaces)))
+                       ;; (unless (eq :nil per-window-header-line--saved-emacs-format)
+                       ;;   (setq frmt (cons
+                       ;;               per-window-header-line--saved-emacs-format
+                       ;;               frmt)))
+                       frmt)))
 
-           (setq common-mode-line-update-display-function
+           (setq per-frame-mode-line-update-display-function
                  #'(lambda (display)
                      (let ((buf (cdr (assq 'buf display))))
                        (with-current-buffer buf
@@ -148,37 +123,12 @@ add the following to your config:
                                   mode-line-modified mode-line-remote " "
                                   mode-line-buffer-identification " " (vc-mode vc-mode) " "
                                   mode-line-modes mode-line-misc-info mode-line-end-spaces)
-                                'common-mode-line-face common-header-mode-line--selected-window))
-                              (win (cdr (assq 'win display))))
+                                'per-frame-mode-line-face per-frame-header-mode-line--selected-window)))
                            (insert mode-l-str))
                          (setq-local mode-line-format nil)
                          (setq-local header-line-format nil)
-                         (setq-local buffer-read-only t)))))
-
-           (set-face-attribute
-            'common-mode-line-active-window-mode-line-face
-            nil :height 0.1)
-           (set-face-attribute
-            'common-mode-line-inactive-window-mode-line-face
-            nil :height 0.3)
-
-           ;; (set-face-attribute
-           ;;  'common-mode-line-active-window-mode-line-face
-           ;;  nil :height 0.9)
-           ;; (set-face-attribute
-           ;;  'common-mode-line-inactive-window-mode-line-face
-           ;;  nil :height 0.8)
-
-           ;; (setq common-mode-line-per-window-format-function
-           ;;       #'(lambda (win)
-           ;;           (format-mode-line
-           ;;            '("%e" mode-line-front-space mode-line-mule-info mode-line-client
-           ;;              mode-line-modified mode-line-remote mode-line-frame-identification
-           ;;              mode-line-buffer-identification "   " mode-line-position
-           ;;              (vc-mode vc-mode)
-           ;;              "  " mode-line-misc-info mode-line-end-spaces)
-           ;;            nil win (window-buffer win))))
-           )))
+                         (goto-char (point-min))
+                         (setq-local buffer-read-only t))))))))
 
 ```
 
@@ -188,10 +138,16 @@ Result of the above code:
 
 ## How to contribute  
 
-Edit `common-header-mode-line-source.el`, then run make or build.sh, 
-then start `emacs -Q`, open `common-heade-mode-line.el`, `eval-buffer`, 
+Edit a `*-source.el`, then run `make package`, install package, 
+then start emacs, activate the `common-header-mode-line-mode`, 
 test how it works, if works well commit and push.  
-When editing `common-header-mode-line-source.el` using `$*` in symbol or string will 
+
+### Cryptic writings
+
+When editing `*-source.el` using `$*` in symbol or string will 
 cause the current top level form be repeated two times 
 -- first time the `$*` will be replaced by `header`, second time by `mode`.  
 The `$@` in symbol or string will be replaced by `header-mode`.  
+`$0` -- to `header`, `$1` -- `mode`.  
+`($eval expr)` is replaced by the result of evaluation of the expr.  
+`($subloop expr)` limit bounds of the `$*` expansion.  

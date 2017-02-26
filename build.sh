@@ -7,4 +7,14 @@
 # Keywords: emacs, mode-line, header-line, convenience, frames, windows
 # X-URL: http://github.com/Bad-ptr/common-header-mode-line.el
 
-emacs --batch --eval "(progn (add-to-list 'load-path \"./\") (require 'generate-common-header-mode-line))"
+string_to_eval="(progn
+;; (setq debug-on-error t)
+(setq make-backup-files nil)
+(require 'subr-x)
+(setq common-header-mode-line-input-filename
+      \"$1\"
+      common-header-mode-line-output-filename
+      \"$2\")
+(require 'generate-common-header-mode-line))"
+
+emacs --batch -L . --eval "$string_to_eval"

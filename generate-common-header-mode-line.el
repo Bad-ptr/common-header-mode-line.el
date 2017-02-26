@@ -1,4 +1,4 @@
-;;; generate-common-header-mode-line.el --- Generate common-header-mode-line.el. -*- lexical-binding: t; -*-
+;;; generate-common-header-mode-line.el --- Generate .el from -source.el. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017 Constantin Kulikov
 ;;
@@ -30,22 +30,49 @@
 
 ;;; Commentary:
 
-;; Generate the common-header-mode-line.el from common-header-mode-line-source.el.
+;; Generate .el from -source.el
 
 ;;; Code:
 
 (require 'common-code-substitute)
 
 
-(defvar common-header-mode-line-input-filename "common-header-mode-line-source.el")
-(defvar common-header-mode-line-output-filename "common-header-mode-line.el")
+(defvar common-header-mode-line-pkg-filename
+  "common-header-mode-line-pkg.el")
+
+(defvar common-header-mode-line-pkg-form
+  (with-current-buffer
+      (find-file-noselect
+       common-header-mode-line-pkg-filename)
+    (car (read-from-string (buffer-string)))))
+
+(defvar common-header-mode-line-version
+  (caddr common-header-mode-line-pkg-form))
+
+(defvaralias 'version 'common-header-mode-line-version)
+
+(defvar date-time (format-time-string "%d/%m/%Y %H:%M"))
+
+(defvar common-header-mode-line-input-filename
+  "common-header-mode-line-source.el")
+(defvar common-header-mode-line-output-filename
+  (concat
+   (substring
+    common-header-mode-line-input-filename
+    0 (cl-search "-source.el" common-header-mode-line-input-filename))
+   ".el"))
+
+(setq default-directory (expand-file-name "./"))
+;; (message "AAA: %s : %s | %s" common-header-mode-line-input-filename common-header-mode-line-output-filename
+;;          default-directory)
 
 (defvar common-header-mode-line-generated-code nil)
 (setq common-header-mode-line-generated-code
       (common-code-substitute-1
        `((items . ("header" "mode")))
        (with-current-buffer
-           (find-file-noselect common-header-mode-line-input-filename)
+           (find-file-noselect
+            common-header-mode-line-input-filename)
          (car (read-from-string (buffer-string))))))
 
 
@@ -75,7 +102,9 @@
    (common-code-pp
     (cdr common-header-mode-line-generated-code)))
   (indent-region (point-min) (point-max))
-  (write-file common-header-mode-line-output-filename))
+  (write-file
+   (file-name-nondirectory
+    common-header-mode-line-output-filename)))
 
 
 

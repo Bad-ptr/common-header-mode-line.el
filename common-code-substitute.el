@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017 Constantin Kulikov
 ;;
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
-;; Version: 0.1
+;; Version: 0.2
 ;; Package-Requires: ()
 ;; Date: 2017/01/27 15:26:17
 ;; License: GPL either version 3 or any later version
@@ -283,13 +283,14 @@ The `STATE' is an alist."
                     ,suffix-sym))))
         ,keys))))
 
-(defun common-code-$\(\)$-substitute-str (state str)
-  (while (string-match "^.*\\($(.*)\\$\\).*$" str)
+
+(defun common-code-${}$-substitute-str (state str)
+  (while (string-match "^.*\\(${.*}\\$\\).*$" str)
     (let ((code-str (match-string 1 str))
           cread (start 0) code-to-eval fun)
       (setq code-str
             (string-remove-prefix
-             "$(" (string-remove-suffix ")$" code-str)))
+             "${" (string-remove-suffix "}$" code-str)))
       (while (cl-destructuring-bind (code . end)
                  (condition-case nil
                      (read-from-string code-str start)
@@ -300,7 +301,7 @@ The `STATE' is an alist."
                  t)))
       (setq code-to-eval (nreverse code-to-eval)
             fun (eval `(lambda (state code) ,@code-to-eval)))
-      (setf (alist-get 'type state) '$\(\)$)
+      (setf (alist-get 'type state) '${}$)
       (setq str (concat
                  (substring str 0 (match-beginning 1))
                  (format "%s" (funcall fun state code-to-eval))
@@ -344,7 +345,7 @@ The `STATE' is an alist."
 (defvar common-code-default-str-substitutors
   (common-code-def-alist-key-fun
    "common-code-"
-   '($\(\)$ $@ $n $*)
+   '(${}$ $@ $n $*)
    "-substitute-str"))
 
 
@@ -411,7 +412,7 @@ The `STATE' is an alist."
 ;;    (funcall common-$@-line-fu))
 ;;  (defun test ()
 ;;    (funcall common-$@-line-fu common-$*-line-test))
-;;  (defun test-$\(\(1+\ 1\)\)$-2 ()
+;;  (defun test-${\(1+\ 1\)}$-2 ()
 ;;    (1+ 1))
 ;;  (defun test1 ()
 ;;    (funcall common-$@-line-fu common--line-test))
