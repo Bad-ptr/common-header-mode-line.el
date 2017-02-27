@@ -188,6 +188,7 @@
      (setq-local overflow-newline-into-fringe nil)
      (setq-local word-wrap nil)
      (setq-local show-trailing-whitespace nil)
+     (setq-local scroll-bar-mode nil)
      (toggle-truncate-lines 1)
      (current-buffer)))
 
