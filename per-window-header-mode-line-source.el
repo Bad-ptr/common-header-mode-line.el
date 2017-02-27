@@ -78,8 +78,8 @@
 ;;; Code:
 ")
 
- (defvar per-window-$*-line-mode)
- (defvar per-window-$@-line-mode)
+ (defvar per-window-$*-line-mode nil)
+ (defvar per-window-$@-line-mode nil)
 
  ;; (unless (boundp 'common-$@-line-mode)
  ;;   (require 'common-$@-line))

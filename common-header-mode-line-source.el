@@ -95,8 +95,8 @@
 ;;; Code:
 ")
 
- (defvar common-$*-line-mode)
- (defvar common-$@-line-mode)
+ (defvar common-$*-line-mode nil)
+ (defvar common-$@-line-mode nil)
 
  (defgroup common-$@-line nil
    "Customize common-$@-line."

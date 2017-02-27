@@ -78,8 +78,8 @@
 ;;; Code:
 ")
 
- (defvar per-frame-$*-line-mode)
- (defvar per-frame-$@-line-mode)
+ (defvar per-frame-$*-line-mode nil)
+ (defvar per-frame-$@-line-mode nil)
 
  ;; (unless (boundp 'common-$@-line-mode)
  ;;   (require 'common-$@-line))
