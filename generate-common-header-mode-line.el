@@ -62,10 +62,6 @@
     0 (cl-search "-source.el" common-header-mode-line-input-filename))
    ".el"))
 
-(setq default-directory (expand-file-name "./"))
-;; (message "AAA: %s : %s | %s" common-header-mode-line-input-filename common-header-mode-line-output-filename
-;;          default-directory)
-
 (defvar common-header-mode-line-generated-code nil)
 (setq common-header-mode-line-generated-code
       (common-code-substitute-1
