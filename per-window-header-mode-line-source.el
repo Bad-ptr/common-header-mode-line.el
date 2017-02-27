@@ -220,7 +220,8 @@
        (if (and per-window-$*-line--saved-emacs-format
                 (not (eq per-window-$*-line--saved-emacs-format :nil)))
            (setq-local $*-line-format per-window-$*-line--saved-emacs-format)
-         (setq-local $*-line-format nil))))
+         (setq-local $*-line-format nil))
+       (setq-local per-window-$*-line--saved-emacs-format nil)))
    ($subloop
     (progn
       ($eval
