@@ -233,7 +233,7 @@
   (define-minor-mode per-window-$*-line-mode
     ""
     :require 'per-window-$@-line
-    :group   'per-window-$@-line
+    :group   'per-window-$*-line
     :init-value nil
     :global     t
     (if per-window-$*-line-mode

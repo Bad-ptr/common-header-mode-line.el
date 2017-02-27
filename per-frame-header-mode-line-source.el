@@ -422,7 +422,7 @@
 When active it draws a $*-line at the bottom(or top) of
 the frame."
     :require 'per-frame-$@-line
-    :group   'per-frame-$@-line
+    :group   'per-frame-$*-line
     :init-value nil
     :global     t
     (if per-frame-$*-line-mode
