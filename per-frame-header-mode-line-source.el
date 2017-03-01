@@ -342,7 +342,7 @@
           (cwin (selected-window)))
      (unless (eq win cwin)
        (setq per-frame-$@-line--selected-window
-             (if (eq (minibuffer-window) cwin)
+             (if (minibuffer-window-active-p cwin)
                  (minibuffer-selected-window)
                cwin)))
      (per-frame-$*-line--update-display display)))
