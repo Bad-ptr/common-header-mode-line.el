@@ -32,13 +32,13 @@ Or you can download a [release](https://github.com/Bad-ptr/common-header-mode-li
 
 Then start emacs and `M-x package-install-file RET path/to/common-header-mode-line-{version}.tar RET`.  
 
-Put the following into your emacs config:
+Put the following into your emacs config:  
 
 ```elisp
 
     (with-eval-after-load "common-header-mode-line-autoloads"
-      (common-mode-line-mode)
-      (common-header-line-mode))
+      (common-mode-line-mode 1)
+      (common-header-line-mode 1))
 
 ```
 
@@ -71,6 +71,17 @@ Activating the `common-header-mode-line-mode` is equivalent to activating
 activating `per-frame-header-mode-line-mode` and `per-window-header-mode-line-mode` 
 which is equivalent to activating `per-frame-header-line-mode`, `per-frame-mode-line-mode`, 
 `per-window-header-line-mode` and `per-window-mode-line-mode`.  
+You can enable/disable any subset of these minor-modes at any time. 
+For example you can enable the `common-header-mode-line-mode` and then disable the `per-frame-header-line-mode`:  
+
+```elisp
+
+    (common-header-mode-line-mode 1)
+    (per-frame-header-line-mode -1)
+
+```
+
+### Example configuration  
 
 ```elisp
 
@@ -97,18 +108,48 @@ which is equivalent to activating `per-frame-header-line-mode`, `per-frame-mode-
            ;;  'per-frame-header-line-inactive-face
            ;;  (face-background 'mode-line-inactive))
 
+           (setq common-header-mode-line-update-delay 0.1)
+
+           (defvar per-window-header-line-format nil)
+
+           (add-hook 'semantic-stickyfunc-mode-hook
+                     #'(lambda ()
+                         (if (and semantic-mode semantic-stickyfunc-mode)
+                             (push semantic-stickyfunc-header-line-format
+                                   per-window-header-line-format)
+                           (setq per-window-header-line-format
+                                 (delq semantic-stickyfunc-header-line-format
+                                       per-window-header-line-format)))))
+
+           (add-hook 'multiple-cursors-mode-hook
+                     #'(lambda ()
+                         (if multiple-cursors-mode
+                             (push mc/mode-line per-window-header-line-format)
+                           (setq per-window-header-line-format
+                                 (delq mc/mode-line
+                                       per-window-header-line-format)))))
+
            (setq per-window-header-line-format-function
                  #'(lambda (win)
-                     (let ((frmt '("%e" mode-line-front-space mode-line-mule-info mode-line-client
-                                   mode-line-modified mode-line-remote mode-line-frame-identification
-                                   mode-line-buffer-identification "   " mode-line-position
-                                   (vc-mode vc-mode)
-                                   "  " mode-line-misc-info mode-line-end-spaces)))
-                       ;; (unless (eq :nil per-window-header-line--saved-emacs-format)
-                       ;;   (setq frmt (cons
-                       ;;               per-window-header-line--saved-emacs-format
-                       ;;               frmt)))
-                       frmt)))
+                     (unless per-window-header-line-format
+                       (setq per-window-header-line-format
+                             `("%e" mode-line-front-space mode-line-mule-info mode-line-client
+                               mode-line-modified mode-line-remote mode-line-frame-identification
+                               mode-line-buffer-identification " " ,(cddr mode-line-position)
+                               (vc-mode vc-mode) " " ,(caddr mode-line-modes) " "
+                               mode-line-misc-info mode-line-end-spaces)))
+                     (let* ((buf (window-buffer win))
+                            (frmt (unless (with-current-buffer buf
+                                            (derived-mode-p 'magit-mode))
+                                    per-window-header-line-format))
+                            ;; (bfrmt (buffer-local-value 'header-line-format (window-buffer win)))
+                            )
+                       ;; (if (eq frmt (cdr bfrmt))
+                       ;;     (setq frmt bfrmt)
+                       ;;   (when (and bfrmt (not (eq bfrmt frmt))
+                       ;;              (not (eq bfrmt '(:eval (tabbar-line)))))
+                       ;;     (setq frmt (cons bfrmt frmt))))
+                       (or frmt (buffer-local-value 'header-line-format buf)))))
 
            (setq per-frame-mode-line-update-display-function
                  #'(lambda (display)
@@ -119,9 +160,11 @@ which is equivalent to activating `per-frame-header-line-mode`, `per-frame-mode-
                          (let*
                              ((mode-l-str
                                (format-mode-line
-                                '(" " (eldoc-mode-line-string (" " eldoc-mode-line-string " "))
+                                `(" " (eldoc-mode-line-string (" " eldoc-mode-line-string " "))
                                   mode-line-modified mode-line-remote " "
-                                  mode-line-buffer-identification " " (vc-mode vc-mode) " "
+                                  mode-line-buffer-identification " "
+                                  ,(cons (car mode-line-position) (cadr mode-line-position))
+                                  (vc-mode vc-mode) " "
                                   mode-line-modes mode-line-misc-info mode-line-end-spaces)
                                 'per-frame-mode-line-face per-frame-header-mode-line--selected-window)))
                            (insert mode-l-str))
