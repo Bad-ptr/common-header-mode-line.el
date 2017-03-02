@@ -189,7 +189,7 @@
      (setq-local word-wrap nil)
      (setq-local show-trailing-whitespace nil)
      ;; (setq-local scroll-bar-mode nil)
-     (toggle-truncate-lines 1)
+     ;; (toggle-truncate-lines 1)
      (current-buffer)))
 
  (defun per-frame-$*-line--get-create-buffer ()
