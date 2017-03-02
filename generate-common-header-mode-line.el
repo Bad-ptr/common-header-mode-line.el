@@ -47,7 +47,7 @@
     (car (read-from-string (buffer-string)))))
 
 (defvar common-header-mode-line-version
-  (caddr common-header-mode-line-pkg-form))
+  (cl-caddr common-header-mode-line-pkg-form))
 
 (defvaralias 'version 'common-header-mode-line-version)
 
