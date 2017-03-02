@@ -160,12 +160,12 @@
              (when per-window-$*-line--face-remap-cookies
                (face-remap-remove-relative
                 per-window-$*-line--face-remap-cookies)
-               (setq per-window-$*-line--face-remap-cookies nil))
-             (setq per-window-$*-line--face-remap-cookies
-                   (face-remap-add-relative '$*-line
-                                            (if (eq win (selected-window))
-                                                'per-window-$*-line-active-face
-                                              'per-window-$*-line-inactive-face))))))
+               (setq-local per-window-$*-line--face-remap-cookies nil))
+             (setq-local per-window-$*-line--face-remap-cookies
+                         (face-remap-add-relative '$*-line
+                                                  (if (eq win (selected-window))
+                                                      'per-window-$*-line-active-face
+                                                    'per-window-$*-line-inactive-face))))))
        (setq-local $*-line-format
                    (per-window-$*-line--format win)))))
 
@@ -216,11 +216,11 @@
                   (pop per-window-$*-line--face-remap-cookies)))
             '(progn
                (face-remap-remove-relative per-window-$*-line--face-remap-cookies)
-               (setq per-window-$*-line--face-remap-cookies nil)))))
-       (if (and per-window-$*-line--saved-emacs-format
-                (not (eq per-window-$*-line--saved-emacs-format :nil)))
-           (setq-local $*-line-format per-window-$*-line--saved-emacs-format)
-         (setq-local $*-line-format nil))
+               (setq-local per-window-$*-line--face-remap-cookies nil)))))
+       (when per-window-$*-line--saved-emacs-format
+         (if (eq :nil per-window-$*-line--saved-emacs-format)
+             (setq-local $*-line-format nil)
+           (setq-local $*-line-format per-window-$*-line--saved-emacs-format)))
        (setq-local per-window-$*-line--saved-emacs-format nil)))
    ($subloop
     (progn
