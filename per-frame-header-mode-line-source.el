@@ -183,12 +183,12 @@
       (setq-local $*-line-format nil))
      (setq-local cursor-type nil)
      (setq-local cursor-in-non-selected-windows nil)
-     (setq-local left-fringe-width 0)
-     (setq-local right-fringe-width 0)
+     ;; (setq-local left-fringe-width 0)
+     ;; (setq-local right-fringe-width 0)
      (setq-local overflow-newline-into-fringe nil)
      (setq-local word-wrap nil)
      (setq-local show-trailing-whitespace nil)
-     (setq-local scroll-bar-mode nil)
+     ;; (setq-local scroll-bar-mode nil)
      (toggle-truncate-lines 1)
      (current-buffer)))
 
@@ -200,6 +200,7 @@
             (with-current-buffer
                 (get-buffer-create per-frame-$*-line-buffer-name)
               (face-remap-add-relative 'default 'per-frame-$*-line-face)
+              ;; (buffer-face-set 'per-frame-$*-line-face)
               (current-buffer))))))
 
  (defun per-frame-$*-line--kill-buffer (&optional buf)
@@ -215,15 +216,18 @@
        (set-window-buffer win buf)
        (set-window-dedicated-p win t)
        (set-window-parameter win 'no-other-window t)
+       (set-window-margins win 0 0)
+       (set-window-fringes win 0 0)
+       (set-window-scroll-bars win 0 nil 0 nil)
        (setq-local window-min-height 1)
        (setq-local window-safe-min-height 1)
-       (setq-local window-size-fixed nil)
-       (fit-window-to-buffer win 1 1)
+       (let (;; (window-resize-pixelwise t)
+             window-size-fixed)
+         ;; (shrink-window-if-larger-than-buffer)
+         (fit-window-to-buffer win 1 1))
+       (setq-local window-size-fixed t)
        (when (fboundp 'window-preserve-size)
-         (window-preserve-size win nil t))
-       ;; (shrink-window-if-larger-than-buffer)
-       ;; (window-preserve-size win nil t)
-       (setq-local window-size-fixed t))
+         (window-preserve-size win nil t)))
      win))
 
  (defun per-frame-$*-line--create-window-1 (&optional frame buf)
@@ -231,11 +235,13 @@
      (with-selected-frame (or frame (selected-frame))
        (setq win
              (if per-frame-$*-line-display-type
-                 (display-buffer-in-side-window
-                  (or buf (current-buffer))
-                  `((side . ,per-frame-$*-line-window-side)
-                    (slot . ,per-frame-$*-line-window-slot)
-                    (window-height . 1)))
+                 (let (;; (window-resize-pixelwise t)
+                       )
+                   (display-buffer-in-side-window
+                    (or buf (current-buffer))
+                    `((side . ,per-frame-$*-line-window-side)
+                      (slot . ,per-frame-$*-line-window-slot)
+                      (window-height . 1))))
                (split-window (frame-root-window) nil
                              (if (eq 'bottom per-frame-$*-line-window-side)
                                  'below 'above)))))
@@ -367,6 +373,9 @@
                           (frame-list))))
    (dolist (frame frames)
      (per-frame-$*-line--get-create-display frame))
+
+   ;; (setq default-frame-alist '((right-divider-width . 4)
+   ;;                             (bottom-divider-width . 4)))
 
    (add-to-list 'window-persistent-parameters
                 '(per-frame-$*-line-window . writable))
