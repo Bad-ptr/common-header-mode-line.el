@@ -96,6 +96,9 @@
  (defvar per-frame-$@-line--inhibit-delete-window-advice nil
    "Used to locally allow deleting any window.")
 
+ (defvar per-frame-$@-line--inhibit-window-conf-get-advices nil
+   "Temporarily disable window-configuration advices.")
+
 
  (defgroup per-frame-$*-line nil
    "Customize per-frame-$*-line."
@@ -362,6 +365,18 @@
  (defun per-frame-$*-line--display-buffer-p (b)
    (eq b per-frame-$*-line--buffer))
 
+ (defun per-frame-$@-line--sleep ()
+   (common-$@-line-rem-delayed-update-function
+    #'per-frame-$@-line--update)
+   (setq per-frame-$@-line--inhibit-delete-window-advice t
+         per-frame-$@-line--inhibit-window-conf-get-advices t))
+
+ (defun per-frame-$@-line--wake ()
+   (common-$@-line-add-delayed-update-function
+    #'per-frame-$@-line--update)
+   (setq per-frame-$@-line--inhibit-delete-window-advice nil
+         per-frame-$@-line--inhibit-window-conf-get-advices nil))
+
  (defun per-frame-$*-line--activate (&optional frames)
    (unless (listp frames) (setq frames (list frames)))
    (unless frames (setq frames
@@ -383,12 +398,14 @@
                 '(no-other-window . writable))
 
    (ad-activate #'delete-window)
-   (common-$@-line-add-delayed-update-function
-    #'per-frame-$@-line--update)
+   ;; (ad-activate #'current-window-configuration)
+   (ad-activate #'window-state-get)
    (add-hook 'per-window-$@-line-ignore-buffer-functions
-             #'per-frame-$*-line--display-buffer-p))
+             #'per-frame-$*-line--display-buffer-p)
+   (per-frame-$@-line--wake))
 
  (defun per-frame-$*-line--deactivate (&optional frames)
+   (per-frame-$@-line--sleep)
    (unless (listp frames) (setq frames (list frames)))
    (let (all-frames win all)
      (unless frames
@@ -399,14 +416,15 @@
         (frame-parameter frame 'per-frame-$*-line-display)))
      (unless (window-with-parameter 'per-frame-$*-line-window t)
        (setq all-frames t))
-     (when all-frames
-       (progn
-         (unless (or per-frame-$0-line-mode per-frame-$1-line-mode)
-           (ad-deactivate #'delete-window)
-           (common-$@-line-rem-delayed-update-function
-            #'per-frame-$@-line--update)
-           (remove-hook 'per-window-$@-line-ignore-buffer-functions
-                        #'per-frame-$*-line--display-buffer-p))))))
+     (if all-frames
+         (progn
+           (unless (or per-frame-$0-line-mode per-frame-$1-line-mode)
+             (ad-deactivate #'delete-window)
+             ;; (ad-deactivate #'current-window-configuration)
+             (ad-deactivate #'window-state-get)
+             (remove-hook 'per-window-$@-line-ignore-buffer-functions
+                          #'per-frame-$*-line--display-buffer-p)))
+       (per-frame-$@-line--wake))))
 
  (defun per-frame-$@-line--can-delete-window-p (win)
    (if (or per-frame-$0-line-mode per-frame-$1-line-mode)
@@ -425,6 +443,38 @@
                   (selected-window)))))
        nil
      ad-do-it))
+
+ (defmacro with-suspended-per-frame-$@-line (&rest body)
+   `(let ($@-lines-to-reactivate
+          window-configuration-change-hook)
+      (per-frame-$@-line--sleep)
+      (unwind-protect (progn ,@body)
+        (per-frame-$@-line--wake))))
+
+ ;; (defadvice current-window-configuration
+ ;;     (around per-frame-$@-line--current-window-configuration-adv)
+ ;;   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
+ ;;            (not per-frame-$@-line--inhibit-window-conf-get-advices))
+ ;;       (with-suspended-per-frame-$@-line ad-do-it)
+ ;;     ad-do-it))
+
+ (defadvice window-state-get
+     (around per-frame-$@-line--window-state-get-adv)
+   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
+            (not per-frame-$@-line--inhibit-window-conf-get-advices))
+       (with-suspended-per-frame-$@-line
+        (let* ((win (ad-get-arg 0))
+               (frame (window-frame win))
+               window-configuration-change-hook)
+          ($subloop
+           (per-frame-$*-line--kill-display
+            (frame-parameter frame 'per-frame-$*-line-display)))
+          (unless (window-live-p win)
+            (setq win (frame-root-window frame))
+            (ad-set-arg 0 win))
+          ad-do-it))
+     ad-do-it))
+
 
  (:autoload
   (define-minor-mode per-frame-$*-line-mode
