@@ -124,7 +124,7 @@ For example you can enable the `common-header-mode-line-mode` and then disable t
            (add-hook 'multiple-cursors-mode-hook
                      #'(lambda ()
                          (if multiple-cursors-mode
-                             (push mc/mode-line per-window-header-line-format)
+                             (add-to-list 'per-window-header-line-format mc/mode-line)
                            (setq per-window-header-line-format
                                  (delq mc/mode-line
                                        per-window-header-line-format)))))
