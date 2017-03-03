@@ -78,6 +78,8 @@
 ;;; Code:
 ")
 
+ (require 'advice)
+
  (defvar per-frame-$*-line-mode nil)
  (defvar per-frame-$@-line-mode nil)
 
@@ -397,8 +399,14 @@
    (add-to-list 'window-persistent-parameters
                 '(no-other-window . writable))
 
+   (ad-enable-advice #'delete-window 'around
+                     'per-frame-$@-line--delete-window-adv)
    (ad-activate #'delete-window)
+   ;; (ad-enable-advice #'current-window-configuration 'around
+   ;;                   'per-frame-$@-line--current-window-configuration-adv)
    ;; (ad-activate #'current-window-configuration)
+   (ad-enable-advice #'window-state-get 'around
+                     'per-frame-$@-line--window-state-get-adv)
    (ad-activate #'window-state-get)
    (add-hook 'per-window-$@-line-ignore-buffer-functions
              #'per-frame-$*-line--display-buffer-p)
@@ -419,9 +427,15 @@
      (if all-frames
          (progn
            (unless (or per-frame-$0-line-mode per-frame-$1-line-mode)
-             (ad-deactivate #'delete-window)
-             ;; (ad-deactivate #'current-window-configuration)
-             (ad-deactivate #'window-state-get)
+             (ad-disable-advice #'delete-window 'around
+                                'per-frame-$@-line--delete-window-adv)
+             (ad-activate #'delete-window)
+             ;; (ad-disable-advice #'current-window-configuration 'around
+             ;;                   'per-frame-$@-line--current-window-configuration-adv)
+             ;; (ad-activate #'current-window-configuration)
+             (ad-disable-advice #'window-state-get 'around
+                                'per-frame-$@-line--window-state-get-adv)
+             (ad-activate #'window-state-get)
              (remove-hook 'per-window-$@-line-ignore-buffer-functions
                           #'per-frame-$*-line--display-buffer-p)))
        (per-frame-$@-line--wake))))
