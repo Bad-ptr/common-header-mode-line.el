@@ -8,7 +8,7 @@
 ;; Date: 2017/01/27 15:26:17
 ;; License: GPL either version 3 or any later version
 ;; Keywords: mode-line, header-line, convenience, frames, windows, ui
-;; X-URL: https://github.com/Bad-ptr/common-header-mode-line.el
+;; URL: https://github.com/Bad-ptr/common-header-mode-line.el
 
 ;;; License:
 

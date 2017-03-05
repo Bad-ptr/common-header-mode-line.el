@@ -5,7 +5,7 @@
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
 ;; Date: 2017/01/29 09:05:26
 ;; License: GPL either version 3 or any later version
-;; X-URL: http://github.com/Bad-ptr/common-header-mode-line.el
+;; URL: http://github.com/Bad-ptr/common-header-mode-line.el
 
 ;;; License:
 
@@ -41,7 +41,7 @@
 ;; Date: ${date-time}$
 ;; License: GPL either version 3 or any later version
 ;; Keywords: header-line, mode-line, convenience, frames, windows
-;; X-URL: http://github.com/Bad-ptr/common-$@-line.el
+;; URL: http://github.com/Bad-ptr/common-$@-line.el
 
 ;;; License:
 

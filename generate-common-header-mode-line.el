@@ -8,7 +8,7 @@
 ;; Date: 2017/01/29 09:05:26
 ;; License: GPL either version 3 or any later version
 ;; Keywords: code generation
-;; X-URL: http://github.com/Bad-ptr/common-header-mode-line.el
+;; URL: http://github.com/Bad-ptr/common-header-mode-line.el
 
 ;;; License:
 

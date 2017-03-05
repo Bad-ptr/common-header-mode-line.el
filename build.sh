@@ -5,7 +5,7 @@
 # Date: 2017/02/12 11:14:08
 # License: GPL either version 3 or any later version
 # Keywords: emacs, mode-line, header-line, convenience, frames, windows
-# X-URL: http://github.com/Bad-ptr/common-header-mode-line.el
+# URL: http://github.com/Bad-ptr/common-header-mode-line.el
 
 string_to_eval="(progn
 ;; (setq debug-on-error t)
