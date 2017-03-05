@@ -91,6 +91,13 @@ For example you can enable the `common-header-mode-line-mode` and then disable t
        #'(lambda ()
            (common-header-mode-line-mode 1)
 
+           (dolist (frame (frame-list))
+             (set-frame-parameter frame 'bottom-divider-width 1)
+             (set-frame-parameter frame 'right-divider-width 1))
+
+           (push (cons 'bottom-divider-width 1) default-frame-alist)
+           (push (cons 'right-divider-width 1) default-frame-alist)
+
            (let ((def-height (face-attribute 'default :height)))
              (set-face-attribute
               'per-window-header-line-active-face nil
