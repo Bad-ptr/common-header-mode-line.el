@@ -226,10 +226,9 @@
        (set-window-scroll-bars win 0 nil 0 nil)
        (setq-local window-min-height 1)
        (setq-local window-safe-min-height 1)
-       (let (;; (window-resize-pixelwise t)
-             window-size-fixed)
+       (let (window-size-fixed)
          ;; (shrink-window-if-larger-than-buffer)
-         (fit-window-to-buffer win 1 1))
+         (fit-window-to-buffer win 1))
        (setq-local window-size-fixed t)
        (when (fboundp 'window-preserve-size)
          (window-preserve-size win nil t)))
@@ -240,13 +239,11 @@
      (with-selected-frame (or frame (selected-frame))
        (setq win
              (if per-frame-$*-line-display-type
-                 (let (;; (window-resize-pixelwise t)
-                       )
-                   (display-buffer-in-side-window
-                    (or buf (current-buffer))
-                    `((side . ,per-frame-$*-line-window-side)
-                      (slot . ,per-frame-$*-line-window-slot)
-                      (window-height . 1))))
+                 (display-buffer-in-side-window
+                  (or buf (current-buffer))
+                  `((side . ,per-frame-$*-line-window-side)
+                    (slot . ,per-frame-$*-line-window-slot)
+                    (window-height . 1)))
                (split-window (frame-root-window) nil
                              (if (eq 'bottom per-frame-$*-line-window-side)
                                  'below 'above)))))
@@ -254,6 +251,13 @@
 
  (defun per-frame-$*-line--create-window (&optional frame)
    (let* (window-configuration-change-hook
+          (split-width-threshold 2)
+          (split-height-threshold 2)
+          (window-safe-min-height 1)
+          (window-safe-min-width 1)
+          (window-min-height 1)
+          (window-min-width 1)
+          (window-resize-pixelwise t)
           (buf (per-frame-$*-line--get-create-buffer))
           (win (per-frame-$*-line--create-window-1 frame buf)))
      (set-frame-parameter frame 'per-frame-$*-line-window win)
