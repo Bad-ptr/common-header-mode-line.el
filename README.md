@@ -117,38 +117,64 @@ For example you can enable the `common-header-mode-line-mode` and then disable t
 
            (setq common-header-mode-line-update-delay 0.1)
 
-           (defvar per-window-header-line-format nil)
+           (defvar per-window-header-line-active-format nil)
+           (defvar per-window-header-line-inactive-format nil)
 
            (add-hook 'semantic-stickyfunc-mode-hook
                      #'(lambda ()
                          (if (and semantic-mode semantic-stickyfunc-mode)
                              (push semantic-stickyfunc-header-line-format
-                                   per-window-header-line-format)
-                           (setq per-window-header-line-format
+                                   per-window-header-line-active-format)
+                           (setq per-window-header-line-active-format
                                  (delq semantic-stickyfunc-header-line-format
-                                       per-window-header-line-format)))))
+                                       per-window-header-line-active-format)))))
 
            (add-hook 'multiple-cursors-mode-hook
                      #'(lambda ()
                          (if multiple-cursors-mode
-                             (add-to-list 'per-window-header-line-format mc/mode-line)
-                           (setq per-window-header-line-format
+                             (add-to-list 'per-window-header-line-active-format
+                                          mc/mode-line)
+                           (setq per-window-header-line-active-format
                                  (delq mc/mode-line
-                                       per-window-header-line-format)))))
+                                       per-window-header-line-active-format)))))
 
            (setq per-window-header-line-format-function
                  #'(lambda (win)
-                     (unless per-window-header-line-format
-                       (setq per-window-header-line-format
-                             `("%e" mode-line-front-space mode-line-mule-info mode-line-client
-                               mode-line-modified mode-line-remote mode-line-frame-identification
-                               mode-line-buffer-identification " " ,(cddr mode-line-position)
-                               (vc-mode vc-mode) " " ,(caddr mode-line-modes) " "
+                     (unless per-window-header-line-active-format
+                       (setq per-window-header-line-active-format
+                             `("" mode-line-front-space mode-line-mule-info
+                               mode-line-modified
+                               mode-line-remote " " mode-line-buffer-identification
+                               " " mode-line-position (vc-mode vc-mode) " "
+                               ;;" " ,(caddr mode-line-modes)
                                mode-line-misc-info mode-line-end-spaces)))
+                     (unless per-window-header-line-inactive-format
+                       (setq per-window-header-line-inactive-format
+                             `("" mode-line-front-space mode-line-mule-info
+                               mode-line-modified
+                               mode-line-remote " " mode-line-buffer-identification
+                               " " ,(caddr mode-line-position) (vc-mode vc-mode) " "
+                               mode-line-misc-info mode-line-end-spaces)))
+                     ;; (let* ((buf (window-buffer win))
+                     ;;        (bfrmt (buffer-local-value 'header-line-format buf))
+                     ;;        (cf-sym (if (eq win (selected-window))
+                     ;;                    'per-window-header-line-active-format
+                     ;;                  'per-window-header-line-inactive-format)))
+                     ;;   (with-current-buffer buf
+                     ;;     (when (and (not (eq bfrmt per-window-header-line-active-format))
+                     ;;                (not (eq bfrmt per-window-header-line-inactive-format))
+                     ;;                (not (eq bfrmt tabbar-header-line-format)))
+                     ;;       (set (make-local-variable 'per-window-header-line-active-format)
+                     ;;            (cons bfrmt (default-value 'per-window-header-line-active-format)))
+                     ;;       (set (make-local-variable 'per-window-header-line-inactive-format)
+                     ;;            (cons bfrmt (default-value 'per-window-header-line-inactive-format))))
+                     ;;     (symbol-value cf-sym)))
                      (let* ((buf (window-buffer win))
                             (frmt (unless (with-current-buffer buf
                                             (derived-mode-p 'magit-mode))
-                                    per-window-header-line-format))
+                                    (if (eq (selected-window) win)
+                                        per-window-header-line-active-format
+                                      per-window-header-line-inactive-format)))
                             ;; (bfrmt (buffer-local-value 'header-line-format (window-buffer win)))
                             )
                        ;; (if (eq frmt (cdr bfrmt))
@@ -167,11 +193,9 @@ For example you can enable the `common-header-mode-line-mode` and then disable t
                          (let*
                              ((mode-l-str
                                (format-mode-line
-                                `(" " (eldoc-mode-line-string (" " eldoc-mode-line-string " "))
-                                  mode-line-modified mode-line-remote " "
-                                  mode-line-buffer-identification " "
-                                  ,(cons (car mode-line-position) (cadr mode-line-position))
-                                  (vc-mode vc-mode) " "
+                                `("%e" mode-line-front-space
+                                  (eldoc-mode-line-string (" " eldoc-mode-line-string " "))
+                                  mode-line-modified mode-line-client mode-line-frame-identification
                                   mode-line-modes mode-line-misc-info mode-line-end-spaces)
                                 'per-frame-mode-line-face per-frame-header-mode-line--selected-window)))
                            (insert mode-l-str))
