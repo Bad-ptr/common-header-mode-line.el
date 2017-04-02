@@ -251,6 +251,7 @@
 
  (defun per-frame-$*-line--create-window (&optional frame)
    (let* (window-configuration-change-hook
+          golden-ratio-mode
           (split-width-threshold 2)
           (split-height-threshold 2)
           (window-safe-min-height 1)
