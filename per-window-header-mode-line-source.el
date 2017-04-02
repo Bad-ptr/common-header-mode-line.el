@@ -115,7 +115,7 @@
    "Default format.")
 
  (defvar-local per-window-$*-line--face-remap-cookies nil
-   "")
+   "Per-buffer face-remap cookie.")
 
  (defface per-window-$*-line-active-face
    '((default :inherit $*-line :height 5))
@@ -128,7 +128,7 @@
    :group 'per-window-$*-line)
 
  (defun per-window-$*-line--format-function (win)
-   ""
+   "Default format function."
    ($eval
     (if (eq '$1 '$*)
         " "
@@ -232,7 +232,10 @@
 
  (:autoload
   (define-minor-mode per-window-$*-line-mode
-    ""
+    "Toggle the `per-window-$*-line-mode'. If active
+it manages the `$*-line' appearence in visible windows
+by changing the buffer-local variable `$*-line-format'
+of visible buffers."
     :require 'per-window-$@-line
     :group   'per-window-$*-line
     :init-value nil
@@ -243,7 +246,7 @@
 
  (:autoload
   (define-minor-mode per-window-$@-line-mode
-    ""
+    "`per-window-$0-line-mode' + `per-window-$1-line-mode'."
     :require 'per-window-$@-line
     :group   'per-window-$@-line
     :init-value nil

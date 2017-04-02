@@ -496,8 +496,8 @@
 
  (:autoload
   (define-minor-mode per-frame-$*-line-mode
-    "Toggle the per-frame-$*-line-mode.
-When active it draws a $*-line at the bottom(or top) of
+    "Toggle the `per-frame-$*-line-mode'.
+When active it draws a `$*-line' at the bottom(or top) of
 the frame."
     :require 'per-frame-$@-line
     :group   'per-frame-$*-line
@@ -509,7 +509,7 @@ the frame."
 
  (:autoload
   (define-minor-mode per-frame-$@-line-mode
-    "Toggle per-frame-$0-line-mode and per-frame-$1-line-mode."
+    "`per-frame-$0-line-mode' + `per-frame-$1-line-mode'."
     :require 'per-frame-$@-line
     :group   'per-frame-$@-line
     :init-value nil

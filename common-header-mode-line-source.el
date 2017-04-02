@@ -195,7 +195,7 @@
 
  (:autoload
   (define-minor-mode common-$*-line-mode
-    ""
+    "`per-window-$*-line-mode' + `per-frame-$*-line-mode'"
     :require 'common-$@-line
     :group   'common-$@-line
     :init-value nil
@@ -206,7 +206,7 @@
 
  (:autoload
   (define-minor-mode common-$@-line-mode
-    ""
+    "`common-$0-line-mode' + `common-$1-line-mode'"
     :require 'common-$@-line
     :group   'common-$@-line
     :init-value nil
