@@ -165,8 +165,9 @@
            (run-with-idle-timer
             common-$@-line-update-delay nil
             #'(lambda ()
-                (common-$@-line--update)
-                (setq common-$@-line--delayed-update-timer nil))))))
+                (unwind-protect (common-$@-line--update)
+                  (setq common-$@-line--delayed-update-timer nil)))))))
+
 
  (:autoload
   (defun common-$@-line-add-delayed-update-function (fun)
