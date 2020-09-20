@@ -87,7 +87,7 @@ For example you can enable the `common-header-mode-line-mode` and then disable t
 
     (with-eval-after-load "common-header-mode-line-autoloads"
       (add-hook
-       'after-init-hook
+       'window-setup-hook
        #'(lambda ()
            (common-header-mode-line-mode 1)
 
@@ -101,11 +101,11 @@ For example you can enable the `common-header-mode-line-mode` and then disable t
            (let ((def-height (face-attribute 'default :height)))
              (set-face-attribute
               'per-window-header-line-active-face nil
-              :height (ceiling (* 0.9 def-height)))
+              :height (ceiling (max 1 (* 0.9 def-height))))
 
              (set-face-attribute
               'per-window-header-line-inactive-face nil
-              :height (floor (* 0.7 def-height))))
+              :height (floor (max 1 (* 0.7 def-height)))))
 
            ;; (set-face-background
            ;;  'per-window-header-line-active-face
