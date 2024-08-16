@@ -95,6 +95,9 @@
 ;;; Code:
 ")
 
+ (declare-function per-window-$*-line-mode "ext:per-window-$*-line" (&optional arg))
+ (declare-function per-frame-$*-line-mode "ext:per-frame-$*-line" (&optional arg))
+
  (defvar common-$*-line-mode nil)
  (defvar common-$@-line-mode nil)
 
@@ -136,13 +139,6 @@
      (cancel-timer common-$@-line--delayed-update-timer)
      (setq common-$@-line--delayed-update-timer nil)))
 
- (defun common-$@-line-set-delayed-update-functions (funs)
-   (when (and (null common-$@-line-delayed-update-functions)
-              funs)
-     (common-$@-line--activate-delayed-update-hooks))
-   (when (null funs)
-     (common-$@-line--deactivate-delayed-update-hooks))
-   (setq common-$@-line-delayed-update-functions funs))
 
  (defcustom common-$@-line-delayed-update-functions nil
    "List of functions to call to update $@-lines."
@@ -151,8 +147,17 @@
    :set #'(lambda (sym val)
             (unless (boundp 'common-$@-line-delayed-update-functions)
               (setq common-$@-line-delayed-update-functions nil))
-            (common-$@-line-set-delayed-update-functions val)
+            (when (fboundp 'common-$@-line-set-delayed-update-functions)
+			  (common-$@-line-set-delayed-update-functions val))
             (custom-set-default sym val)))
+
+ (defun common-$@-line-set-delayed-update-functions (funs)
+   (when (and (null common-$@-line-delayed-update-functions)
+              funs)
+     (common-$@-line--activate-delayed-update-hooks))
+   (when (null funs)
+     (common-$@-line--deactivate-delayed-update-hooks))
+   (setq common-$@-line-delayed-update-functions funs))
 
 
  (defun common-$@-line--update ()

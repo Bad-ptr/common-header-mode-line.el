@@ -79,6 +79,11 @@
 ")
 
  (require 'advice)
+ (require 'face-remap)
+
+ (declare-function common-$@-line-add-delayed-update-function "ext:common-$@-line" (fun))
+ (declare-function common-$@-line-rem-delayed-update-function "ext:common-$@-line" (fun))
+
 
  (defvar per-frame-$*-line-mode nil)
  (defvar per-frame-$@-line-mode nil)
