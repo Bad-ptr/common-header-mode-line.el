@@ -107,6 +107,20 @@
    "Temporarily disable window-configuration advices.")
 
 
+ (defcustom per-frame-$@-line-ignore-frame-functions
+   (list (lambda (fr) (or (not (frame-live-p fr))
+                     (not (frame-visible-p fr))))
+         (lambda (fr) (and (fboundp 'daemonp) (daemonp)
+                      (eq fr terminal-frame)))
+         (lambda (fr) (and (featurep 'posframe)
+                      (or (frame-parameter fr 'posframe-buffer)
+                          (frame-parameter fr 'posframe-parent-buffer)
+                          (string= "posframe" (frame-parameter fr 'title))))))
+   "Ignore frame(argument) if one of these functions return non nil."
+   :group 'per-frame-$@-line
+   :type '(repeat function))
+
+
  (defgroup per-frame-$*-line nil
    "Customize per-frame-$*-line."
    :prefix "per-frame-$*-line-"
@@ -320,7 +334,9 @@
          display))))
 
  (defun per-frame-$*-line--get-create-display (&optional frame)
-   (funcall per-frame-$*-line-get-create-display-function frame))
+   (unless (run-hook-with-args-until-success
+            'per-frame-$@-line-ignore-frame-functions frame)
+     (funcall per-frame-$*-line-get-create-display-function frame)))
 
  (defun per-frame-$*-line--update-display-function (display)
    (let ((buf (cdr (assq 'buf display))))
@@ -353,21 +369,22 @@
  (defun per-frame-$*-line--update-display (display)
    (funcall per-frame-$*-line-update-display-function display))
 
- (defun per-frame-$*-line--update ()
-   (let* ((display (per-frame-$*-line--get-create-display))
-          (win (cdr (assq 'win display)))
-          (cwin (selected-window)))
-     (unless (eq win cwin)
-       (setq per-frame-$@-line--selected-window
-             (if (minibuffer-window-active-p cwin)
-                 (minibuffer-selected-window)
-               cwin)))
-     (per-frame-$*-line--update-display display)))
+ (defun per-frame-$*-line--update (&optional frame)
+   (let ((display (per-frame-$*-line--get-create-display frame)))
+     (when display
+       (let ((win (cdr (assq 'win display)))
+             (cwin (selected-window)))
+         (unless (eq win cwin)
+           (setq per-frame-$@-line--selected-window
+                 (if (minibuffer-window-active-p cwin)
+                     (minibuffer-selected-window)
+                   cwin))))
+       (per-frame-$*-line--update-display display))))
 
  (defun per-frame-$@-line--update ()
    ($subloop
     (when per-frame-$*-line-mode
-      (per-frame-$*-line--update)))
+      (per-frame-$*-line--update (selected-frame))))
    t)
 
  (defun per-frame-$*-line--display-buffer-p (b)
@@ -388,10 +405,10 @@
  (defun per-frame-$*-line--activate (&optional frames)
    (unless (and frames (listp frames))
      (setq frames
-           (if (and (fboundp 'daemonp) (daemonp))
-               (filtered-frame-list
-                #'(lambda (f) (not (eq f terminal-frame))))
-             (frame-list))))
+           (filtered-frame-list (lambda (fr)
+                                  (not
+                                   (run-hook-with-args-until-success
+                                    'per-frame-$@-line-ignore-frame-functions fr))))))
    (dolist (frame frames)
      (per-frame-$*-line--get-create-display frame))
 
@@ -420,10 +437,10 @@
    (per-frame-$@-line--sleep)
    (let (all-frames win all)
      (unless (and frames (listp frames))
-       (setq frames (if (and (fboundp 'daemonp) (daemonp))
-                        (filtered-frame-list
-                         #'(lambda (f) (not (eq f terminal-frame))))
-                      (frame-list))
+       (setq frames (filtered-frame-list (lambda (fr)
+                                           (not
+                                            (run-hook-with-args-until-success
+                                             'per-frame-$@-line-ignore-frame-functions fr))))
              all-frames t))
      (dolist (frame frames)
        (per-frame-$*-line--kill-display
