@@ -96,10 +96,10 @@
    :prefix "per-window-$@-line-"
    :group 'common-$@-line)
 
- (defcustom per-window-$@-line-ignore-buffer-functions nil
+ (defcustom per-window-$@-line-ignore-buffer-functions (list #'minibufferp)
    "Ignore buffer(argument) if one of these functions return non nil."
    :group 'per-window-$@-line
-   :type 'hook)
+   :type '(repeat function))
 
 
  (defgroup per-window-$*-line nil
@@ -226,8 +226,8 @@
        (when per-window-$*-line--saved-emacs-format
          (if (eq :nil per-window-$*-line--saved-emacs-format)
              (setq-local $*-line-format nil)
-           (setq-local $*-line-format per-window-$*-line--saved-emacs-format)))
-       (setq-local per-window-$*-line--saved-emacs-format nil)))
+           (setq-local $*-line-format per-window-$*-line--saved-emacs-format))
+         (setq-local per-window-$*-line--saved-emacs-format nil))))
    ($subloop
     (progn
       ($eval

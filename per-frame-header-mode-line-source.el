@@ -191,6 +191,7 @@
      (buffer-disable-undo)
      ($subloop
       (setq-local $*-line-format nil))
+     (setq-local window-size-fixed t)
      (setq-local cursor-type nil)
      (setq-local cursor-in-non-selected-windows nil)
      ;; (setq-local left-fringe-width 0)
@@ -200,18 +201,16 @@
      (setq-local show-trailing-whitespace nil)
      ;; (setq-local scroll-bar-mode nil)
      ;; (toggle-truncate-lines 1)
-     (current-buffer)))
+     ;; (buffer-face-set 'per-frame-$*-line-face)
+     (face-remap-add-relative 'default 'per-frame-$*-line-face))
+   b)
 
  (defun per-frame-$*-line--get-create-buffer ()
    (if (buffer-live-p per-frame-$*-line--buffer)
        per-frame-$*-line--buffer
      (setq per-frame-$*-line--buffer
            (per-frame-$@-line--init-buffer
-            (with-current-buffer
-                (get-buffer-create per-frame-$*-line-buffer-name)
-              (face-remap-add-relative 'default 'per-frame-$*-line-face)
-              ;; (buffer-face-set 'per-frame-$*-line-face)
-              (current-buffer))))))
+            (get-buffer-create per-frame-$*-line-buffer-name)))))
 
  (defun per-frame-$*-line--kill-buffer (&optional buf)
    (unless buf
@@ -221,27 +220,24 @@
 
 
  (defun per-frame-$@-line--init-window-with-buffer (win buf)
-   (with-selected-window win
-     (with-current-buffer buf
-       (set-window-buffer win buf)
-       (set-window-dedicated-p win t)
-       (set-window-parameter win 'no-other-window t)
-       (set-window-margins win 0 0)
-       (set-window-fringes win 0 0)
-       (set-window-scroll-bars win 0 nil 0 nil)
-       (setq-local window-min-height 1)
-       (setq-local window-safe-min-height 1)
-       (let (window-size-fixed)
-         ;; (shrink-window-if-larger-than-buffer)
-         (fit-window-to-buffer win 1))
-       (setq-local window-size-fixed t)
-       (when (fboundp 'window-preserve-size)
-         (window-preserve-size win nil t)))
-     win))
+   (set-window-buffer win buf)
+   (set-window-dedicated-p win t)
+   (set-window-parameter win 'no-other-window t)
+   (set-window-margins win 0 0)
+   (set-window-fringes win 0 0)
+   (set-window-scroll-bars win 0 nil 0 nil)
+   (with-current-buffer buf
+     (let (window-size-fixed)
+       ;; (shrink-window-if-larger-than-buffer win)
+       (fit-window-to-buffer win 1)))
+   (when (fboundp 'window-preserve-size)
+     (window-preserve-size win nil t))
+   win)
 
  (defun per-frame-$*-line--create-window-1 (&optional frame buf)
+   (unless frame (setq frame (selected-frame)))
    (let (win)
-     (with-selected-frame (or frame (selected-frame))
+     (with-selected-frame frame
        (setq win
              (if per-frame-$*-line-display-type
                  (display-buffer-in-side-window
@@ -249,7 +245,7 @@
                   `((side . ,per-frame-$*-line-window-side)
                     (slot . ,per-frame-$*-line-window-slot)
                     (window-height . 1)))
-               (split-window (frame-root-window) nil
+               (split-window (frame-root-window frame) nil
                              (if (eq 'bottom per-frame-$*-line-window-side)
                                  'below 'above)))))
      win))
@@ -272,9 +268,9 @@
 
  (defun per-frame-$*-line--get-create-window (&optional frame)
    (let ((win (frame-parameter frame 'per-frame-$*-line-window)))
-     (unless (window-live-p win)
+     (unless (and (window-live-p win) (eq frame (window-frame win)))
        (setq win (window-with-parameter 'per-frame-$*-line-window t frame)))
-     (unless (window-live-p win)
+     (unless (and (window-live-p win) (eq frame (window-frame win)))
        (setq win (per-frame-$*-line--create-window frame)))
      win))
 
@@ -309,6 +305,7 @@
      (and (window-live-p win) (buffer-live-p buf))))
 
  (defun per-frame-$*-line--get-create-display-function (&optional frame)
+   (unless frame (setq frame (selected-frame)))
    (let ((display (frame-parameter frame 'per-frame-$*-line-display)))
      (if (per-frame-$*-line--display-valid-p display)
          display
@@ -316,8 +313,7 @@
               (win (per-frame-$*-line--get-create-window frame))
               (display (cons (cons 'buf buf)
                              (cons (cons 'win win)
-                                   (cons (cons 'frame (or frame
-                                                          (selected-frame)))
+                                   (cons (cons 'frame frame)
                                          nil)))))
          (set-frame-parameter frame 'per-frame-$*-line-display
                               display)
@@ -390,14 +386,12 @@
          per-frame-$@-line--inhibit-window-conf-get-advices nil))
 
  (defun per-frame-$*-line--activate (&optional frames)
-   (unless (listp frames) (setq frames (list frames)))
-   (unless frames (setq frames
-                        (if (and (fboundp 'daemonp) (daemonp))
-                            (filtered-frame-list
-                             #'(lambda (f)
-                                 (and (frame-live-p f)
-                                      (not (eq f terminal-frame)))))
-                          (frame-list))))
+   (unless (and frames (listp frames))
+     (setq frames
+           (if (and (fboundp 'daemonp) (daemonp))
+               (filtered-frame-list
+                #'(lambda (f) (not (eq f terminal-frame))))
+             (frame-list))))
    (dolist (frame frames)
      (per-frame-$*-line--get-create-display frame))
 
@@ -424,10 +418,12 @@
 
  (defun per-frame-$*-line--deactivate (&optional frames)
    (per-frame-$@-line--sleep)
-   (unless (listp frames) (setq frames (list frames)))
    (let (all-frames win all)
-     (unless frames
-       (setq frames (frame-list)
+     (unless (and frames (listp frames))
+       (setq frames (if (and (fboundp 'daemonp) (daemonp))
+                        (filtered-frame-list
+                         #'(lambda (f) (not (eq f terminal-frame))))
+                      (frame-list))
              all-frames t))
      (dolist (frame frames)
        (per-frame-$*-line--kill-display
@@ -450,12 +446,13 @@
                           #'per-frame-$*-line--display-buffer-p)))
        (per-frame-$@-line--wake))))
 
- (defun per-frame-$@-line--can-delete-window-p (win)
+ (defun per-frame-$@-line--can-delete-window-p (win &optional frame)
+   (unless frame (setq frame (window-frame win)))
    (if (or per-frame-$0-line-mode per-frame-$1-line-mode)
        (not
         (or (window-parameter win 'per-frame-$0-line-window)
             (window-parameter win 'per-frame-$1-line-window)
-            (< (length (window-list nil 0 win)) 3)))
+            (< (length (window-list frame 0 win)) 3)))
      t))
 
  (defadvice delete-window
@@ -469,11 +466,13 @@
      ad-do-it))
 
  (defmacro with-suspended-per-frame-$@-line (&rest body)
-   `(let ($@-lines-to-reactivate
-          window-configuration-change-hook)
-      (per-frame-$@-line--sleep)
-      (unwind-protect (progn ,@body)
-        (per-frame-$@-line--wake))))
+   `(progn
+      (let (window-configuration-change-hook)
+        (per-frame-$@-line--sleep))
+      (unwind-protect
+          (progn ,@body)
+        (let (window-configuration-change-hook)
+          (per-frame-$@-line--wake)))))
 
  ;; (defadvice current-window-configuration
  ;;     (around per-frame-$@-line--current-window-configuration-adv)
@@ -488,11 +487,11 @@
             (not per-frame-$@-line--inhibit-window-conf-get-advices))
        (with-suspended-per-frame-$@-line
         (let* ((win (ad-get-arg 0))
-               (frame (window-frame win))
-               window-configuration-change-hook)
-          ($subloop
-           (per-frame-$*-line--kill-display
-            (frame-parameter frame 'per-frame-$*-line-display)))
+               (frame (window-frame win)))
+          (let (window-configuration-change-hook)
+            ($subloop
+             (per-frame-$*-line--kill-display
+              (frame-parameter frame 'per-frame-$*-line-display))))
           (unless (window-live-p win)
             (setq win (frame-root-window frame))
             (ad-set-arg 0 win))
