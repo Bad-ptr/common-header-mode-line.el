@@ -112,10 +112,10 @@
    "Function, takes window, returns $*-line-format for window."
    :group 'per-window-$*-line
    :type 'function
-   :set #'(lambda (sym val)
-            (custom-set-default sym val)
-            (when per-window-$*-line-mode
-              (per-window-$@-line-update-all-windows t))))
+   :set (lambda (sym val)
+          (custom-set-default sym val)
+          (when per-window-$*-line-mode
+            (per-window-$@-line-update-all-windows t))))
 
  (defvar-local per-window-$*-line--saved-emacs-format nil
    "Default format.")
@@ -198,20 +198,20 @@
          (setq cwin (next-window cwin 0 all-frames)))
        (per-window-$@-line--update-window start-win))))
 
- (defun per-window-$@-line-generic-hook (&rest args)
+ (defun per-window-$@-line-generic-hook-function (&rest args)
    (when (or per-window-$0-line-mode per-window-$1-line-mode)
      (per-window-$@-line-update-all-windows))
    t)
 
  (defun per-window-$*-line--activate ()
    (common-$@-line-add-delayed-update-function
-    #'per-window-$@-line-generic-hook)
+    #'per-window-$@-line-generic-hook-function)
    (per-window-$@-line-update-all-windows t))
 
  (defun per-window-$*-line--deactivate ()
    (unless (or per-window-$0-line-mode per-window-$1-line-mode)
      (common-$@-line-rem-delayed-update-function
-      #'per-window-$@-line-generic-hook))
+      #'per-window-$@-line-generic-hook-function))
    (dolist (buf (buffer-list))
      (with-current-buffer buf
        (when per-window-$*-line--face-remap-cookies
