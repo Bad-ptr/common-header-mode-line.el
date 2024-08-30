@@ -122,31 +122,44 @@
    :group 'common-$@-line
    :type 'hook)
 
+ (defcustom common-$@-line-delayed-update-on-hooks
+   (list 'post-command-hook
+         'window-configuration-change-hook
+         'common-$@-line-force-mode-line-update-functions)
+   "List of hooks that trigger delayed update."
+   :group 'common-$@-line
+   :type '(repeat symbol)
+   :set (lambda (sym val)
+          (when (fboundp 'common-$@-line--deactivate-delayed-update-hooks)
+            (common-$@-line--deactivate-delayed-update-hooks))
+          (custom-set-default sym val)
+          (when (fboundp 'common-$@-line--activate-delayed-update-hooks)
+            (common-$@-line--activate-delayed-update-hooks))))
+
+
  (defadvice force-mode-line-update
      (after common-$@-line--after-force-mode-line-update-adv)
    (run-hooks 'common-$@-line-force-mode-line-update-functions)
    nil)
 
  (defun common-$@-line--activate-delayed-update-hooks ()
-   (add-hook 'post-command-hook
-             #'common-$@-line--delayed-update)
-   (add-hook 'window-configuration-change-hook
-             #'common-$@-line--delayed-update)
+   (mapc
+    (lambda (hk) (add-hook hk #'common-$@-line--delayed-update))
+    common-$@-line-delayed-update-on-hooks)
    (ad-enable-advice #'force-mode-line-update 'after
                      'common-$@-line--after-force-mode-line-update-adv)
    (ad-activate #'force-mode-line-update))
 
  (defun common-$@-line--deactivate-delayed-update-hooks ()
-   (remove-hook 'post-command-hook
-                #'common-$@-line--delayed-update)
-   (remove-hook 'window-configuration-change-hook
-                #'common-$@-line--delayed-update)
    (when (timerp common-$@-line--delayed-update-timer)
      (cancel-timer common-$@-line--delayed-update-timer)
-     (setq common-$@-line--delayed-update-timer nil)))
+     (setq common-$@-line--delayed-update-timer nil))
    (ad-disable-advice #'force-mode-line-update 'after
                       'common-$@-line--after-force-mode-line-update-adv)
    (ad-activate #'force-mode-line-update)
+   (mapc
+    (lambda (hk) (remove-hook hk #'common-$@-line--delayed-update))
+    common-$@-line-delayed-update-on-hooks))
 
 
  (defcustom common-$@-line-delayed-update-functions nil
