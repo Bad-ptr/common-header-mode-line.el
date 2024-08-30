@@ -2,7 +2,7 @@
 
 ## Copyright  
 
-Copyright (C) 2017 Constantin Kulikov  
+Copyright (C) 2025 Constantin Kulikov  
 
 Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>  
 Date: 2017/02/12 11:14:08  
@@ -88,121 +88,187 @@ For example you can enable the `common-header-mode-line-mode` and then disable t
     (with-eval-after-load "common-header-mode-line-autoloads"
       (add-hook
        'window-setup-hook
-       #'(lambda ()
-           (common-header-mode-line-mode 1)
+       (lambda ()
+		 (common-header-mode-line-mode 1)
 
-           (dolist (frame (frame-list))
-             (set-frame-parameter frame 'bottom-divider-width 1)
-             (set-frame-parameter frame 'right-divider-width 1))
+		 (dolist (frame (frame-list))
+		   (set-frame-parameter frame 'bottom-divider-width 1)
+		   (set-frame-parameter frame 'right-divider-width 1))
 
-           (push (cons 'bottom-divider-width 1) default-frame-alist)
-           (push (cons 'right-divider-width 1) default-frame-alist)
+		 (push (cons 'bottom-divider-width 1) default-frame-alist)
+		 (push (cons 'right-divider-width 1) default-frame-alist)
 
-           (let ((def-height (face-attribute 'default :height)))
-             (set-face-attribute
-              'per-window-header-line-active-face nil
-              :height (ceiling (max 1 (* 0.9 def-height))))
+		 (let ((def-height (face-attribute 'default :height)))
+		   (set-face-attribute
+			'per-window-header-line-active-face nil
+			:height (ceiling (max 1 (* 0.9 def-height))))
 
-             (set-face-attribute
-              'per-window-header-line-inactive-face nil
-              :height (floor (max 1 (* 0.7 def-height)))))
+		   (set-face-attribute
+			'per-window-header-line-inactive-face nil
+			:height (floor (max 1 (* 0.7 def-height)))))
 
-           ;; (set-face-background
-           ;;  'per-window-header-line-active-face
-           ;;  (face-background 'mode-line))
+		 ;; (set-face-background
+		 ;;  'per-window-header-line-active-face
+		 ;;  (face-background 'mode-line))
 
-           ;; (set-face-background
-           ;;  'per-frame-header-line-inactive-face
-           ;;  (face-background 'mode-line-inactive))
+		 ;; (set-face-background
+		 ;;  'per-frame-header-line-inactive-face
+		 ;;  (face-background 'mode-line-inactive))
 
-           (setq common-header-mode-line-update-delay 0.1)
+		 ;; (customize-set-variable 'common-header-mode-line-update-delay 0.1)
 
-           (defvar per-window-header-line-active-format nil)
-           (defvar per-window-header-line-inactive-format nil)
+		 ;; (customize-set-variable 'common-header-mode-line-delayed-update-register-timer-function
+		 ;;                         #'run-with-timer)
 
-           (add-hook 'semantic-stickyfunc-mode-hook
-                     #'(lambda ()
-                         (if (and semantic-mode semantic-stickyfunc-mode)
-                             (push semantic-stickyfunc-header-line-format
-                                   per-window-header-line-active-format)
-                           (setq per-window-header-line-active-format
-                                 (delq semantic-stickyfunc-header-line-format
-                                       per-window-header-line-active-format)))))
+		 ;; (customize-set-variable
+		 ;;  'common-header-mode-line-delayed-update-on-hooks
+		 ;;  (cons 'window-state-change-functions
+		 ;;        (remove 'window-configuration-change-hook
+		 ;;                common-header-mode-line-delayed-update-on-hooks)))
 
-           (add-hook 'multiple-cursors-mode-hook
-                     #'(lambda ()
-                         (if multiple-cursors-mode
-                             (add-to-list 'per-window-header-line-active-format
-                                          mc/mode-line)
-                           (setq per-window-header-line-active-format
-                                 (delq mc/mode-line
-                                       per-window-header-line-active-format)))))
+		 (setopt
+		  common-header-mode-line-update-delay 0.1
+		  common-header-mode-line-delayed-update-register-timer-function #'run-with-timera
+		  common-header-mode-line-delayed-update-on-hooks
+		  (cons 'window-state-change-functions
+				(remove 'window-configuration-change-hook
+						common-header-mode-line-delayed-update-on-hooks)))
 
-           (setq per-window-header-line-format-function
-                 #'(lambda (win)
-                     (unless per-window-header-line-active-format
-                       (setq per-window-header-line-active-format
-                             `("" mode-line-front-space mode-line-mule-info
-                               mode-line-modified
-                               mode-line-remote " " mode-line-buffer-identification
-                               " " mode-line-position (vc-mode vc-mode) " "
-                               ;;" " ,(caddr mode-line-modes)
-                               mode-line-misc-info mode-line-end-spaces)))
-                     (unless per-window-header-line-inactive-format
-                       (setq per-window-header-line-inactive-format
-                             `("" mode-line-front-space mode-line-mule-info
-                               mode-line-modified
-                               mode-line-remote " " mode-line-buffer-identification
-                               " " ,(caddr mode-line-position) (vc-mode vc-mode) " "
-                               mode-line-misc-info mode-line-end-spaces)))
-                     ;; (let* ((buf (window-buffer win))
-                     ;;        (bfrmt (buffer-local-value 'header-line-format buf))
-                     ;;        (cf-sym (if (eq win (selected-window))
-                     ;;                    'per-window-header-line-active-format
-                     ;;                  'per-window-header-line-inactive-format)))
-                     ;;   (with-current-buffer buf
-                     ;;     (when (and (not (eq bfrmt per-window-header-line-active-format))
-                     ;;                (not (eq bfrmt per-window-header-line-inactive-format))
-                     ;;                (not (eq bfrmt tabbar-header-line-format)))
-                     ;;       (set (make-local-variable 'per-window-header-line-active-format)
-                     ;;            (cons bfrmt (default-value 'per-window-header-line-active-format)))
-                     ;;       (set (make-local-variable 'per-window-header-line-inactive-format)
-                     ;;            (cons bfrmt (default-value 'per-window-header-line-inactive-format))))
-                     ;;     (symbol-value cf-sym)))
-                     (let* ((buf (window-buffer win))
-                            (frmt (unless (with-current-buffer buf
-                                            (derived-mode-p 'magit-mode))
-                                    (if (eq (selected-window) win)
-                                        per-window-header-line-active-format
-                                      per-window-header-line-inactive-format)))
-                            ;; (bfrmt (buffer-local-value 'header-line-format (window-buffer win)))
-                            )
-                       ;; (if (eq frmt (cdr bfrmt))
-                       ;;     (setq frmt bfrmt)
-                       ;;   (when (and bfrmt (not (eq bfrmt frmt))
-                       ;;              (not (eq bfrmt '(:eval (tabbar-line)))))
-                       ;;     (setq frmt (cons bfrmt frmt))))
-                       (or frmt (buffer-local-value 'header-line-format buf)))))
 
-           (setq per-frame-mode-line-update-display-function
-                 #'(lambda (display)
-                     (let ((buf (cdr (assq 'buf display))))
-                       (with-current-buffer buf
-                         (setq-local buffer-read-only nil)
-                         (erase-buffer)
-                         (let*
-                             ((mode-l-str
-                               (format-mode-line
-                                `("%e" mode-line-front-space
-                                  (eldoc-mode-line-string (" " eldoc-mode-line-string " "))
-                                  mode-line-modified mode-line-client mode-line-frame-identification
-                                  mode-line-modes mode-line-misc-info mode-line-end-spaces)
-                                'per-frame-mode-line-face per-frame-header-mode-line--selected-window)))
-                           (insert mode-l-str))
-                         (setq-local mode-line-format nil)
-                         (setq-local header-line-format nil)
-                         (goto-char (point-min))
-                         (setq-local buffer-read-only t))))))))
+		 (defvar per-window-header-line-active-format nil)
+		 (defvar per-window-header-line-inactive-format nil)
+
+		 (add-hook 'semantic-stickyfunc-mode-hook
+				   (lambda ()
+					 (if (and semantic-mode semantic-stickyfunc-mode)
+						 (push semantic-stickyfunc-header-line-format
+							   per-window-header-line-active-format)
+					   (setq per-window-header-line-active-format
+							 (delq semantic-stickyfunc-header-line-format
+								   per-window-header-line-active-format)))))
+
+		 (add-hook 'multiple-cursors-mode-hook
+				   (lambda ()
+					 (if multiple-cursors-mode
+						 (add-to-list 'per-window-header-line-active-format
+									  mc/mode-line)
+					   (setq per-window-header-line-active-format
+							 (delq mc/mode-line
+								   per-window-header-line-active-format)))))
+
+		 (setq per-window-header-line-format-function
+			   (lambda (win)
+				 (unless per-window-header-line-active-format
+				   (setq per-window-header-line-active-format
+						 `("" mode-line-front-space mode-line-mule-info
+						   mode-line-modified
+						   mode-line-remote " " mode-line-buffer-identification
+						   " " mode-line-position (vc-mode vc-mode) " "
+						   ;;" " ,(caddr mode-line-modes)
+						   mode-line-misc-info mode-line-end-spaces)))
+				 (unless per-window-header-line-inactive-format
+				   (setq per-window-header-line-inactive-format
+						 `("" mode-line-front-space mode-line-mule-info
+						   mode-line-modified
+						   mode-line-remote " " mode-line-buffer-identification
+						   " " ,(caddr mode-line-position) (vc-mode vc-mode) " "
+						   mode-line-misc-info mode-line-end-spaces)))
+				 (let* ((buf (window-buffer win))
+						(frmt (unless (or (string-prefix-p " " (buffer-name (window-buffer win)))
+										  (with-current-buffer buf
+											(derived-mode-p 'magit-mode))
+										  ;; (and (boundp 'transient--window) (eq win transient--window))
+										  ;; (and (boundp 'lv-wnd) (eq win lv-wnd))
+										  )
+								(if (eq (selected-window) win)
+									per-window-header-line-active-format
+								  per-window-header-line-inactive-format))))
+				   (or frmt (buffer-local-value 'header-line-format buf)))))
+
+		 (setq per-window-mode-line-format-function
+			   (lambda (win)
+				   (if (or (string-prefix-p " " (buffer-name (window-buffer win)))
+						   ;; (and (boundp 'lv-wnd) (eq win lv-wnd))
+						   ;; (and (boundp 'transient--window) (eq win transient--window))
+						   )
+					   mode-line-format
+					 nil)))
+
+		 (with-eval-after-load "eldoc"
+		   (defun per-frame-mode-line-clear-eldoc-mode-line-string (&rest args)
+			 (setq eldoc-mode-line-string nil))
+		   (add-hook 'window-configuration-change-hook
+					 #'per-frame-mode-line-clear-eldoc-mode-line-string)
+		   (defun per-frame-mode-line-eldoc-minibuffer-message (format-string &rest args)
+			 "Display message specified by FORMAT-STRING and ARGS on the mode-line as needed.
+This function displays the message produced by formatting ARGS with FORMAT-STRING on the mode line."
+			 (if per-frame-mode-line-mode
+				 (progn
+				   (with-current-buffer
+					   (window-buffer
+						(or (window-in-direction 'above (minibuffer-window))
+							(minibuffer-selected-window)
+							(get-largest-window)))
+					 (when (and mode-line-format
+								(not (and (listp mode-line-format)
+										  (assq 'eldoc-mode-line-string mode-line-format))))
+					   (setq mode-line-format
+							 (list "" '(eldoc-mode-line-string
+										(" " eldoc-mode-line-string " "))
+								   mode-line-format)))
+					 (setq eldoc-mode-line-string
+						   (when (stringp format-string)
+							 (apply #'format-message format-string args)))
+					 (force-mode-line-update)))
+			   (apply #'eldoc-minibuffer-message format-string args)))
+		   (setq eldoc-message-function
+				 #'per-frame-mode-line-eldoc-minibuffer-message))
+
+		 (setq per-frame-mode-line-update-display-function
+		   (lambda (display)
+			 (let ((buf (cdr (assq 'buf display))))
+			   (with-current-buffer buf
+				 (setq-local buffer-read-only nil
+							 tab-width 8)
+				 (unless (local-variable-p 'per-frame-mode-line-window-to-measure buf)
+				   (setq-local per-frame-mode-line-window-to-measure nil
+							   per-frame-mode-line-padding ""))
+				 (let* ((mode-l-str
+						 (format-mode-line
+						  `("%e" mode-line-front-space
+							(eldoc-mode-line-string (" " eldoc-mode-line-string " "))
+							;; (eldoc-last-message (" " eldoc-last-message " "))
+							mode-line-modified mode-line-client
+							mode-line-frame-identification
+							mode-line-modes mode-line-misc-info mode-line-end-spaces)
+						  'per-frame-mode-line-face
+						  per-frame-header-mode-line--selected-window)))
+				   (if (active-minibuffer-window)
+					   (setq-local
+						per-frame-mode-line-window-to-measure (active-minibuffer-window)
+						per-frame-mode-line-padding "")
+					 (setq-local per-frame-mode-line-window-to-measure
+								 per-frame-header-mode-line--selected-window)
+					 (let* ((m-l-s-w (string-width mode-l-str))
+							(f-w (frame-width))
+							(w-s (+ (window-left-column per-frame-mode-line-window-to-measure)
+									;; (with-selected-window per-frame-mode-line-window-to-measure
+									;;   (current-column))
+									(with-current-buffer
+										(window-buffer per-frame-mode-line-window-to-measure)
+									  (current-column))))
+							(r-w (- f-w (+ w-s m-l-s-w)))
+							(padding-length (/ (+ w-s (cond ((< r-w 0) r-w)
+															(t 0)))
+											   tab-width)))
+					   (setq-local
+						per-frame-mode-line-padding (make-string padding-length ?\t))))
+				   (erase-buffer)
+				   (insert per-frame-mode-line-padding mode-l-str)
+				   (goto-char (point-min))
+				   (setq-local mode-line-format nil
+							   header-line-format nil
+							   buffer-read-only t)))))))))
 
 ```
 
