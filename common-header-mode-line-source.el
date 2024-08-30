@@ -116,10 +116,15 @@
    :group 'common-$@-line
    :type 'float)
 
+ (defcustom common-$@-line-force-mode-line-update-functions
+   (list #'common-$@-line--delayed-update)
+   "Functions that runs after `fore-mode-line-update'."
+   :group 'common-$@-line
+   :type 'hook)
 
  (defadvice force-mode-line-update
-     (after common-$@-line--delayed-update-adv)
-   (common-$@-line--delayed-update)
+     (after common-$@-line--after-force-mode-line-update-adv)
+   (run-hooks 'common-$@-line-force-mode-line-update-functions)
    nil)
 
  (defun common-$@-line--activate-delayed-update-hooks ()
@@ -127,6 +132,8 @@
              #'common-$@-line--delayed-update)
    (add-hook 'window-configuration-change-hook
              #'common-$@-line--delayed-update)
+   (ad-enable-advice #'force-mode-line-update 'after
+                     'common-$@-line--after-force-mode-line-update-adv)
    (ad-activate #'force-mode-line-update))
 
  (defun common-$@-line--deactivate-delayed-update-hooks ()
@@ -134,10 +141,12 @@
                 #'common-$@-line--delayed-update)
    (remove-hook 'window-configuration-change-hook
                 #'common-$@-line--delayed-update)
-   (ad-deactivate #'force-mode-line-update)
    (when (timerp common-$@-line--delayed-update-timer)
      (cancel-timer common-$@-line--delayed-update-timer)
      (setq common-$@-line--delayed-update-timer nil)))
+   (ad-disable-advice #'force-mode-line-update 'after
+                      'common-$@-line--after-force-mode-line-update-adv)
+   (ad-activate #'force-mode-line-update)
 
 
  (defcustom common-$@-line-delayed-update-functions nil
