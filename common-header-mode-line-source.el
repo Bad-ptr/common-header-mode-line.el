@@ -162,16 +162,18 @@
     common-$@-line-delayed-update-on-hooks))
 
 
+ ;; TODO: rename to common-$@-line-update-functions
  (defcustom common-$@-line-delayed-update-functions nil
-   "List of functions to call to update $@-lines."
+   "List of functions to call to update $@-lines.
+Functions must accept unknown number of arguments."
    :group 'common-$@-line
    :type 'hook
-   :set #'(lambda (sym val)
-            (unless (boundp 'common-$@-line-delayed-update-functions)
-              (setq common-$@-line-delayed-update-functions nil))
-            (when (fboundp 'common-$@-line-set-delayed-update-functions)
-			  (common-$@-line-set-delayed-update-functions val))
-            (custom-set-default sym val)))
+   :set (lambda (sym val)
+          (unless (boundp 'common-$@-line-delayed-update-funcntions)
+            (setq common-$@-line-delayed-update-functions nil))
+          (when (fboundp 'common-$@-line-set-delayed-update-functions)
+            (common-$@-line-set-delayed-update-functions val))
+          (custom-set-default sym val)))
 
  (defun common-$@-line-set-delayed-update-functions (funs)
    (when (and (null common-$@-line-delayed-update-functions)
@@ -182,9 +184,9 @@
    (setq common-$@-line-delayed-update-functions funs))
 
 
- (defun common-$@-line--update ()
+ (defun common-$@-line--update (&rest args)
    (run-hook-with-args-until-failure
-    'common-$@-line-delayed-update-functions))
+    'common-$@-line-delayed-update-functions args))
 
  (defun common-$@-line--delayed-update (&rest args)
    (unless (timerp common-$@-line--delayed-update-timer)
