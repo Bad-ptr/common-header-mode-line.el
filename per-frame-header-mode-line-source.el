@@ -246,20 +246,20 @@ while manipulating $0/$1-line windows."
      (jit-lock-mode nil)
      (font-lock-mode -1)
      (buffer-disable-undo)
+     ;; (toggle-truncate-lines 1)
      ($subloop
       (setq-local $*-line-format nil))
-     (setq-local window-size-fixed t)
-     (setq-local cursor-type nil)
-     (setq-local cursor-in-non-selected-windows nil)
-     ;; (setq-local left-fringe-width 0)
-     ;; (setq-local right-fringe-width 0)
-     (setq-local overflow-newline-into-fringe nil)
-     (setq-local word-wrap nil)
-     (setq-local show-trailing-whitespace nil)
-     ;; (setq-local scroll-bar-mode nil)
-     ;; (toggle-truncate-lines 1)
-     ;; (buffer-face-set 'per-frame-$*-line-face)
-     (face-remap-add-relative 'default 'per-frame-$*-line-face))
+     (setq-local
+      ;; window-size-fixed t
+      cursor-type nil
+      cursor-in-non-selected-windows nil
+      ;; left-fringe-width 0
+      ;; right-fringe-width 0
+      overflow-newline-into-fringe nil
+      word-wrap nil
+      ;; scroll-bar-mode nil
+      show-trailing-whitespace nil)
+     )
    b)
 
  (defun per-frame-$*-line--get-create-buffer ()
@@ -267,14 +267,22 @@ while manipulating $0/$1-line windows."
        per-frame-$*-line--buffer
      (setq per-frame-$*-line--buffer
            (per-frame-$@-line--init-buffer
-            (get-buffer-create per-frame-$*-line-buffer-name)))))
+            (get-buffer-create per-frame-$*-line-buffer-name)))
+     (with-current-buffer per-frame-$*-line--buffer
+       ;; (buffer-face-set 'per-frame-$*-line-face)
+       (face-remap-add-relative 'default 'per-frame-$*-line-face))
+     per-frame-$*-line--buffer))
 
  (defun per-frame-$*-line--kill-buffer (&optional buf)
    (unless buf
      (setq buf per-frame-$*-line--buffer))
    (when (buffer-live-p buf)
-     (kill-buffer buf)))
+     (per-frame-$@-line--apply-with-no-emacs-window-hooks
+      #'kill-buffer buf)))
 
+ (defun per-frame-$*-line--recreate-buffer ()
+   (per-frame-$*-line--kill-buffer)
+   (per-frame-$*-line--get-create-buffer))
 
  (defun per-frame-$@-line--init-window-with-buffer (win buf)
    (set-window-buffer win buf)
