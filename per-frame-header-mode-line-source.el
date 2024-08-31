@@ -120,6 +120,16 @@
    :group 'per-frame-$@-line
    :type '(repeat function))
 
+ (defcustom per-frame-$@-line-ignore-window-functions
+   (list (lambda (win) (or (window-parameter win 'per-frame-$@-line-ignore)
+                      (and (featurep 'transient)
+                           transient--showp
+                           (eq win transient--window)))))
+   "Sometimes Emacs/package reuses our window(argument). We need to respect that.
+If one of these return non nil -- do not touch that window."
+   :group 'per-frame-$@-line
+   :type '(repeat function))
+
  (defvar per-frame-$@-line--apply-with-no-emacs-window-hooks
    (lambda (fun &rest args) (apply fun args))
    "Generated function to run with let-nilled emacs window hooks.")
