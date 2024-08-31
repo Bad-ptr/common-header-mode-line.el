@@ -219,12 +219,26 @@ while manipulating $0/$1-line windows."
    :group 'per-frame-$*-line)
 
 
+ (defun per-frame-$*-line-get-window (&optional frame)
+   (frame-parameter frame 'per-frame-$*-line-window))
+
+ (defun per-frame-$*-line-set-window (&optional win frame)
+   (when win
+     (set-window-parameter win 'per-frame-$*-line-window t))
+   (set-frame-parameter frame 'per-frame-$*-line-window win))
+
  (defun per-frame-$@-line--apply-with-no-emacs-window-hooks (fun &rest args)
    (apply per-frame-$@-line--apply-with-no-emacs-window-hooks fun args))
 
  (defmacro per-frame-$@-line-with-no-emacs-window-hooks (vars &rest body)
    `(apply per-frame-$@-line--apply-with-no-emacs-window-hooks
            (lambda ,(butlast vars) ,@body) ,@vars))
+
+ (defun per-frame-$@-line-frame-list ()
+   (filtered-frame-list (lambda (fr)
+                          (not
+                           (run-hook-with-args-until-success
+                            'per-frame-$@-line-ignore-frame-functions fr)))))
 
  (defun per-frame-$@-line--init-buffer (b)
    (with-current-buffer b
