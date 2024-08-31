@@ -116,6 +116,12 @@
    :group 'common-$@-line
    :type 'float)
 
+ (defcustom common-$@-line-delayed-update-register-timer-function
+   #'run-with-idle-timer
+   "Function used to create timer for delayed update."
+   :group 'common-$@-line
+   :type 'function)
+
  (defcustom common-$@-line-force-mode-line-update-functions
    (list #'common-$@-line--delayed-update)
    "Functions that runs after `fore-mode-line-update'."
@@ -191,11 +197,12 @@ Functions must accept unknown number of arguments."
  (defun common-$@-line--delayed-update (&rest args)
    (unless (timerp common-$@-line--delayed-update-timer)
      (setq common-$@-line--delayed-update-timer
-           (run-with-idle-timer
-            common-$@-line-update-delay nil
-            #'(lambda ()
-                (unwind-protect (common-$@-line--update)
-                  (setq common-$@-line--delayed-update-timer nil)))))))
+           (apply common-$@-line-delayed-update-register-timer-function
+                  common-$@-line-update-delay nil
+                  (lambda (&rest args)
+                    (unwind-protect (apply #'common-$@-line--update args)
+                      (setq common-$@-line--delayed-update-timer nil)))
+                  args))))
 
 
  (:autoload
