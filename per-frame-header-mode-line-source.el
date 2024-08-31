@@ -106,12 +106,12 @@
  (defvar per-frame-$@-line--inhibit-window-conf-get-advices nil
    "Temporarily disable window-configuration advices.")
 
-
  (defcustom per-frame-$@-line-ignore-frame-functions
    (list (lambda (fr) (or (not (frame-live-p fr))
-                     (not (frame-visible-p fr))))
-         (lambda (fr) (and (fboundp 'daemonp) (daemonp)
-                      (eq fr terminal-frame)))
+                     (not (frame-visible-p fr))
+                     (and (fboundp 'daemonp) (daemonp)
+                          (eq fr terminal-frame))
+                     (frame-parameter fr 'per-frame-$@-line-ignore)))
          (lambda (fr) (and (featurep 'posframe)
                       (or (frame-parameter fr 'posframe-buffer)
                           (frame-parameter fr 'posframe-parent-buffer)
