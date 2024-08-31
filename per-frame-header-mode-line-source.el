@@ -498,6 +498,15 @@ while manipulating $0/$1-line windows."
  (defun per-frame-$*-line--kill-display (display)
    (funcall per-frame-$*-line-kill-display-function display))
 
+ (defun per-frame-$*-line--recreate-display (&optional frames)
+   (if frames
+       (unless (listp frames) (setq frames (list frames)))
+     (setq frames (per-frame-$@-line-frame-list)))
+   (dolist (frame frames)
+     (per-frame-$*-line--kill-display
+      (frame-parameter frame 'per-frame-$*-line-display))
+     (per-frame-$*-line--get-create-display frame)))
+
  (defun per-frame-$*-line--display-valid-p (display)
    (let ((win (cdr (assq 'win display)))
          (buf (cdr (assq 'buf display))))
@@ -508,20 +517,20 @@ while manipulating $0/$1-line windows."
    (let ((display (frame-parameter frame 'per-frame-$*-line-display)))
      (if (per-frame-$*-line--display-valid-p display)
          display
-       (let* ((buf (per-frame-$*-line--get-create-buffer))
-              (win (per-frame-$*-line--get-create-window frame))
-              (display (cons (cons 'buf buf)
-                             (cons (cons 'win win)
-                                   (cons (cons 'frame frame)
-                                         nil)))))
-         (set-frame-parameter frame 'per-frame-$*-line-display
-                              display)
-         display))))
+       (unless (run-hook-with-args-until-success
+                'per-frame-$@-line-ignore-frame-functions frame)
+         (let* ((buf (per-frame-$*-line--get-create-buffer))
+                (win (per-frame-$*-line--get-create-window frame))
+                (display (cons (cons 'buf buf)
+                               (cons (cons 'win win)
+                                     (cons (cons 'frame frame)
+                                           nil)))))
+           (set-frame-parameter frame 'per-frame-$*-line-display
+                                display)
+           display)))))
 
  (defun per-frame-$*-line--get-create-display (&optional frame)
-   (unless (run-hook-with-args-until-success
-            'per-frame-$@-line-ignore-frame-functions frame)
-     (funcall per-frame-$*-line-get-create-display-function frame)))
+   (funcall per-frame-$*-line-get-create-display-function frame))
 
  (defun per-frame-$*-line--update-display-function (display)
    (let ((buf (cdr (assq 'buf display))))
