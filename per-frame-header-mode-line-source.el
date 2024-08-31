@@ -120,6 +120,28 @@
    :group 'per-frame-$@-line
    :type '(repeat function))
 
+ (defvar per-frame-$@-line--apply-with-no-emacs-window-hooks
+   (lambda (fun &rest args) (apply fun args))
+   "Generated function to run with let-nilled emacs window hooks.")
+
+ (defcustom per-frame-$@-line-emacs-window-hooks-to-inhibit
+   (list 'window-configuration-change-hook
+         'window-state-change-hook
+         'window-state-change-functions
+         'window-buffer-change-functions
+         'window-size-change-functions)
+   "These hooks will be let-nil'd in `per-frame-$@-line--apply-with-no-emacs-window-hooks'
+while manipulating $0/$1-line windows."
+   :group 'per-frame-$@-line
+   :type '(repeat symbol)
+   :set (lambda (sym val)
+          (custom-set-default sym val)
+          (setq per-frame-$@-line--apply-with-no-emacs-window-hooks
+                (byte-compile
+                 `(lambda (fun &rest args)
+                    (let ,per-frame-$@-line-emacs-window-hooks-to-inhibit
+                      (apply fun args)))))))
+
 
  (defgroup per-frame-$*-line nil
    "Customize per-frame-$*-line."
@@ -196,6 +218,13 @@
    "Face for common $*-line."
    :group 'per-frame-$*-line)
 
+
+ (defun per-frame-$@-line--apply-with-no-emacs-window-hooks (fun &rest args)
+   (apply per-frame-$@-line--apply-with-no-emacs-window-hooks fun args))
+
+ (defmacro per-frame-$@-line-with-no-emacs-window-hooks (vars &rest body)
+   `(apply per-frame-$@-line--apply-with-no-emacs-window-hooks
+           (lambda ,(butlast vars) ,@body) ,@vars))
 
  (defun per-frame-$@-line--init-buffer (b)
    (with-current-buffer b
