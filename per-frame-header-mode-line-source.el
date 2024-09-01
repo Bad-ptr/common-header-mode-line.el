@@ -635,9 +635,18 @@ while manipulating $0/$1-line windows."
  (defun per-frame-$*-line--update-display (display)
    (funcall per-frame-$*-line-update-display-function display))
 
- (defun per-frame-$*-line--update (&optional frame)
+ (defun per-frame-$*-line--check-fix-display (display)
+   (let ((bufc (assq 'buf display))
+         (winc (assq 'win display))
+         (frame (cdr (assq 'frame display))))
+     (setf (cdr bufc) (per-frame-$*-line--get-create-buffer)
+           (cdr winc) (per-frame-$*-line--check-fix-window frame)))
+   display)
+
+ (defun per-frame-$*-line--update (&optional frame &rest args)
    (let ((display (per-frame-$*-line--get-create-display frame)))
      (when display
+       (per-frame-$*-line--check-fix-display display)
        (let ((win (cdr (assq 'win display)))
              (cwin (selected-window)))
          (unless (eq win cwin)
@@ -647,10 +656,10 @@ while manipulating $0/$1-line windows."
                    cwin))))
        (per-frame-$*-line--update-display display))))
 
- (defun per-frame-$@-line--update ()
+ (defun per-frame-$@-line--update (&rest args)
    ($subloop
     (when per-frame-$*-line-mode
-      (per-frame-$*-line--update (selected-frame))))
+      (apply #'per-frame-$*-line--update (selected-frame) args)))
    t)
 
  (defun per-frame-$*-line--display-buffer-p (b)
