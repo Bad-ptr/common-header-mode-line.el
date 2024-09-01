@@ -677,6 +677,10 @@ while manipulating $0/$1-line windows."
    (setq per-frame-$@-line--inhibit-delete-window-advice nil
          per-frame-$@-line--inhibit-window-conf-advices nil))
 
+(defun per-frame-$*-line--init-new-frame (frame)
+   (unless (run-hook-with-args-until-success
+            'per-frame-$@-line-ignore-frame-functions frame)
+     (per-frame-$*-line--get-create-display frame)))
 
  (defadvice delete-window
      (around per-frame-$@-line--delete-window-adv)
@@ -747,11 +751,10 @@ while manipulating $0/$1-line windows."
 
  (defun per-frame-$*-line--activate (&optional frames)
    (unless (and frames (listp frames))
-     (setq frames
-           (filtered-frame-list (lambda (fr)
-                                  (not
-                                   (run-hook-with-args-until-success
-                                    'per-frame-$@-line-ignore-frame-functions fr))))))
+     (setq frames (per-frame-$@-line-frame-list)))
+
+   (per-frame-$*-line-regenerate-display-buffer-alist-entry)
+
    (dolist (frame frames)
      (per-frame-$*-line--get-create-display frame))
 
@@ -762,28 +765,32 @@ while manipulating $0/$1-line windows."
                 '(per-frame-$*-line-window . writable))
    (add-to-list 'window-persistent-parameters
                 '(no-other-window . writable))
+   (add-to-list 'window-persistent-parameters
+                '(no-delete-other-windows . writable))
 
-   (ad-enable-advice #'delete-window 'around
-                     'per-frame-$@-line--delete-window-adv)
-   (ad-activate #'delete-window)
+   ;; (ad-enable-advice #'delete-window 'around
+   ;;                   'per-frame-$@-line--delete-window-adv)
+   ;; (ad-activate #'delete-window)
    ;; (ad-enable-advice #'current-window-configuration 'around
    ;;                   'per-frame-$@-line--current-window-configuration-adv)
    ;; (ad-activate #'current-window-configuration)
    (ad-enable-advice #'window-state-get 'around
                      'per-frame-$@-line--window-state-get-adv)
    (ad-activate #'window-state-get)
+   (ad-enable-advice #'window-state-put 'around
+                     'per-frame-$@-line--window-state-put-adv)
+   (ad-activate #'window-state-put)
    (add-hook 'per-window-$@-line-ignore-buffer-functions
              #'per-frame-$*-line--display-buffer-p)
+   (add-hook 'after-make-frame-functions
+             #'per-frame-$*-line--init-new-frame)
    (per-frame-$@-line--wake))
 
  (defun per-frame-$*-line--deactivate (&optional frames)
    (per-frame-$@-line--sleep)
    (let (all-frames win all)
      (unless (and frames (listp frames))
-       (setq frames (filtered-frame-list (lambda (fr)
-                                           (not
-                                            (run-hook-with-args-until-success
-                                             'per-frame-$@-line-ignore-frame-functions fr))))
+       (setq frames (per-frame-$@-line-frame-list)
              all-frames t))
      (dolist (frame frames)
        (per-frame-$*-line--kill-display
@@ -796,14 +803,20 @@ while manipulating $0/$1-line windows."
              (ad-disable-advice #'delete-window 'around
                                 'per-frame-$@-line--delete-window-adv)
              (ad-activate #'delete-window)
-             ;; (ad-disable-advice #'current-window-configuration 'around
-             ;;                   'per-frame-$@-line--current-window-configuration-adv)
-             ;; (ad-activate #'current-window-configuration)
+             (ad-disable-advice #'current-window-configuration 'around
+                                'per-frame-$@-line--current-window-configuration-adv)
+             (ad-activate #'current-window-configuration)
              (ad-disable-advice #'window-state-get 'around
                                 'per-frame-$@-line--window-state-get-adv)
              (ad-activate #'window-state-get)
-             (remove-hook 'per-window-$@-line-ignore-buffer-functions
-                          #'per-frame-$*-line--display-buffer-p)))
+             (ad-disable-advice #'window-state-put 'around
+                                'per-frame-$@-line--window-state-put-adv)
+             (ad-activate #'window-state-put))
+           (remove-hook 'per-window-$@-line-ignore-buffer-functions
+                        #'per-frame-$*-line--display-buffer-p)
+           (remove-hook 'after-make-frame-functions
+                        #'per-frame-$*-line--init-new-frame)
+           (per-frame-$*-line-regenerate-display-buffer-alist-entry t))
        (per-frame-$@-line--wake))))
 
  (defun per-frame-$@-line--can-delete-window-p (win &optional frame)
