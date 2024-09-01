@@ -489,51 +489,69 @@ while manipulating $0/$1-line windows."
 
  (defun per-frame-$*-line--create-window-1 (&optional frame buf)
    (unless frame (setq frame (selected-frame)))
-   (let (win)
-     (with-selected-frame frame
-       (setq win
-             (if per-frame-$*-line-display-type
-                 (display-buffer-in-side-window
-                  (or buf (current-buffer))
-                  `((side . ,per-frame-$*-line-window-side)
-                    (slot . ,per-frame-$*-line-window-slot)
-                    (window-height . 1)))
-               (split-window (frame-root-window frame) nil
-                             (if (eq 'bottom per-frame-$*-line-window-side)
-                                 'below 'above)))))
-     win))
+   (per-frame-$@-line-with-no-emacs-window-hooks
+    (()) ;; (frame buf ())
+    (let (win)
+      (with-selected-frame frame
+        (setq win
+              (let (;; (ignore-window-parameters t)
+                    (split-width-threshold 2)
+                    (split-height-threshold 2)
+                    (window-min-height window-safe-min-height)
+                    (window-min-width window-safe-min-width)
+                    (window-resize-pixelwise t)
+                    (buf-display-params (cddr per-frame-$*-line-display-buffer-alist-entry)))
+                (if per-frame-$*-line-display-type
+                    (let ((display-buffer-mark-dedicated t))
+                      (display-buffer-in-side-window
+                       (or buf (current-buffer))
+                       buf-display-params))
+                  (let ((nwin (split-window (frame-root-window frame) -1
+                                            (if (eq 'bottom per-frame-$*-line-window-side)
+                                                'below 'above)))
+                        (wps (cdr (assq 'window-parameters buf-display-params))))
+                    (mapc (lambda (wpc) (set-window-parameter nwin (car wpc) (cdr wpc)))
+                          wps)
+                    (set-window-buffer nwin buf)
+                    nwin)))))
+      win)))
 
  (defun per-frame-$*-line--create-window (&optional frame)
-   (let* (window-configuration-change-hook
-          golden-ratio-mode
-          (split-width-threshold 2)
-          (split-height-threshold 2)
-          (window-safe-min-height 1)
-          (window-safe-min-width 1)
-          (window-min-height 1)
-          (window-min-width 1)
-          (window-resize-pixelwise t)
-          (buf (per-frame-$*-line--get-create-buffer))
+   (let* ((buf (per-frame-$*-line--get-create-buffer))
           (win (per-frame-$*-line--create-window-1 frame buf)))
-     (set-frame-parameter frame 'per-frame-$*-line-window win)
-     (set-window-parameter win 'per-frame-$*-line-window t)
-     (per-frame-$@-line--init-window-with-buffer win buf)))
+     (per-frame-$*-line-set-window win frame)
+     (per-frame-$@-line--init-window-with-buffer win buf)
+     win))
 
  (defun per-frame-$*-line--get-create-window (&optional frame)
-   (let ((win (frame-parameter frame 'per-frame-$*-line-window)))
-     (unless (and (window-live-p win) (eq frame (window-frame win)))
-       (setq win (window-with-parameter 'per-frame-$*-line-window t frame)))
-     (unless (and (window-live-p win) (eq frame (window-frame win)))
+   (let ((win (per-frame-$*-line-get-window frame)))
+     (unless (window-live-p win)
+       (setq win (window-with-parameter 'per-frame-$*-line-window t frame))
+       (per-frame-$*-line-set-window win frame))
+     (unless (window-live-p win)
+       (setq win (per-frame-$*-line--create-window frame)))
+     win))
+
+ (defun per-frame-$*-line--check-fix-window (&optional frame)
+   (let ((win (per-frame-$*-line-get-window frame)))
+     (if (window-live-p win)
+         (unless (run-hook-with-args-until-success
+                  'per-frame-$@-line-ignore-window-functions win)
+           (per-frame-$@-line--init-window-with-buffer
+            win (per-frame-$*-line--get-create-buffer)))
        (setq win (per-frame-$*-line--create-window frame)))
      win))
 
  (defun per-frame-$*-line--kill-window (&optional frame win)
-   (let ((win (or (and (window-live-p win) win)
-                  (frame-parameter frame 'per-frame-$*-line-window)))
-         (per-frame-$@-line--inhibit-delete-window-advice t))
-     (when (window-live-p win)
-       (delete-window win))
-     (set-frame-parameter frame 'per-frame-$*-line-window nil)))
+   (setq win (or (and (window-live-p win) win)
+                 (per-frame-$*-line-get-window frame)))
+   (when (window-live-p win)
+     (per-frame-$@-line-with-no-emacs-window-hooks
+      (()) ;; (win ())
+      (set-window-dedicated-p win nil)
+      (let ((per-frame-$@-line--inhibit-delete-window-advice t))
+        (delete-window win))))
+   (per-frame-$*-line-set-window nil frame))
 
 
  (defun per-frame-$*-line--kill-display-function (display)
