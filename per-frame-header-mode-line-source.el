@@ -101,9 +101,9 @@
    "Used to track current window.")
 
  (defvar per-frame-$@-line--inhibit-delete-window-advice nil
-   "Used to locally allow deleting any window.")
+   "Used to locally allow deleting $0/$0-line windows.")
 
- (defvar per-frame-$@-line--inhibit-window-conf-get-advices nil
+ (defvar per-frame-$@-line--inhibit-window-conf-advices nil
    "Temporarily disable window-configuration advices.")
 
  (defcustom per-frame-$@-line-ignore-frame-functions
@@ -669,13 +669,81 @@ while manipulating $0/$1-line windows."
    (common-$@-line-rem-delayed-update-function
     #'per-frame-$@-line--update)
    (setq per-frame-$@-line--inhibit-delete-window-advice t
-         per-frame-$@-line--inhibit-window-conf-get-advices t))
+         per-frame-$@-line--inhibit-window-conf-advices t))
 
  (defun per-frame-$@-line--wake ()
    (common-$@-line-add-delayed-update-function
     #'per-frame-$@-line--update)
    (setq per-frame-$@-line--inhibit-delete-window-advice nil
-         per-frame-$@-line--inhibit-window-conf-get-advices nil))
+         per-frame-$@-line--inhibit-window-conf-advices nil))
+
+
+ (defadvice delete-window
+     (around per-frame-$@-line--delete-window-adv)
+   (let ((win (or (ad-get-arg 0) (selected-window))))
+     (if (and (not per-frame-$@-line--inhibit-delete-window-advice)
+              (not (per-frame-$@-line--can-delete-window-p win)))
+         (progn
+           (message "per-frame-$@-line Error: Deletion of $0/$1-line window is not allowed.")
+           nil)
+       ad-do-it)))
+
+ (defadvice current-window-configuration
+     (around per-frame-$@-line--current-window-configuration-adv)
+   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
+            (not per-frame-$@-line--inhibit-window-conf-advices))
+       (with-suspended-per-frame-$@-line
+        (per-frame-$@-line--apply-with-no-emacs-window-hooks
+         (lambda (frame)
+           ($subloop
+            (per-frame-$*-line--kill-display
+             (frame-parameter frame 'per-frame-$*-line-display))))
+         (or (ad-get-arg 0) (selected-frame)))
+        ad-do-it)
+     ad-do-it))
+
+ (defadvice window-state-get
+     (around per-frame-$@-line--window-state-get-adv)
+   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
+            (not per-frame-$@-line--inhibit-window-conf-advices))
+       (let* ((win (ad-get-arg 0))
+              (frame (window-frame win))
+              ourwin-p)
+         ($subloop
+          (when (eq win (per-frame-$*-line-get-window frame))
+            (setq ourwin-p)))
+         (with-suspended-per-frame-$@-line
+          (if ourwin-p
+              ad-do-it
+            (per-frame-$@-line-with-no-emacs-window-hooks
+             (()) ;; (frame ())
+             ($subloop
+              (per-frame-$*-line--kill-display
+               (frame-parameter frame 'per-frame-$*-line-display))))
+            ad-do-it)))
+     ad-do-it))
+
+ (defadvice window-state-put
+     (around per-frame-$@-line--window-state-put-adv)
+   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
+            (not per-frame-$@-line--inhibit-window-conf-advices))
+       (let* ((win (ad-get-arg 1))
+              (frame (window-frame win))
+              ourwin-p)
+         ($subloop
+          (when (eq win (per-frame-$*-line-get-window frame))
+            (setq ourwin-p)))
+         (with-suspended-per-frame-$@-line
+          (if ourwin-p
+              ad-do-it
+            (per-frame-$@-line-with-no-emacs-window-hooks
+             (()) ;; (frame ())
+             ($subloop
+              (per-frame-$*-line--kill-display
+               (frame-parameter frame 'per-frame-$*-line-display))))
+            ad-do-it)))
+     ad-do-it))
+
 
  (defun per-frame-$*-line--activate (&optional frames)
    (unless (and frames (listp frames))
@@ -747,15 +815,6 @@ while manipulating $0/$1-line windows."
             (< (length (window-list frame 0 win)) 3)))
      t))
 
- (defadvice delete-window
-     (around per-frame-$@-line--delete-window-adv)
-   (if (and
-        (not per-frame-$@-line--inhibit-delete-window-advice)
-        (not (per-frame-$@-line--can-delete-window-p
-              (or (ad-get-arg 0)
-                  (selected-window)))))
-       nil
-     ad-do-it))
 
  (defmacro with-suspended-per-frame-$@-line (&rest body)
    `(progn
@@ -765,30 +824,6 @@ while manipulating $0/$1-line windows."
           (progn ,@body)
         (let (window-configuration-change-hook)
           (per-frame-$@-line--wake)))))
-
- ;; (defadvice current-window-configuration
- ;;     (around per-frame-$@-line--current-window-configuration-adv)
- ;;   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
- ;;            (not per-frame-$@-line--inhibit-window-conf-get-advices))
- ;;       (with-suspended-per-frame-$@-line ad-do-it)
- ;;     ad-do-it))
-
- (defadvice window-state-get
-     (around per-frame-$@-line--window-state-get-adv)
-   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
-            (not per-frame-$@-line--inhibit-window-conf-get-advices))
-       (with-suspended-per-frame-$@-line
-        (let* ((win (ad-get-arg 0))
-               (frame (window-frame win)))
-          (let (window-configuration-change-hook)
-            ($subloop
-             (per-frame-$*-line--kill-display
-              (frame-parameter frame 'per-frame-$*-line-display))))
-          (unless (window-live-p win)
-            (setq win (frame-root-window frame))
-            (ad-set-arg 0 win))
-          ad-do-it))
-     ad-do-it))
 
 
  (:autoload
