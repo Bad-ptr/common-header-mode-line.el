@@ -165,29 +165,50 @@ while manipulating $0/$1-line windows."
            (const :tag "Use ordinary window" :value nil)
            (const :tag "Use side window" :value side-window)
            (function :tag "Use this function to get or create a display for $*-line"
-                     :value (lambda () nil))))
+                     :value (lambda () nil)))
+   :set (lambda (sym val)
+          (custom-set-default sym val)
+          (when per-frame-$*-line-mode
+            (when (fboundp 'per-frame-$*-line-regenerate-display-buffer-alist-entry)
+              (per-frame-$*-line-regenerate-display-buffer-alist-entry))
+            (when (fboundp 'per-frame-$*-line--recreate-display)
+              (per-frame-$*-line--recreate-display)))))
 
  (defcustom per-frame-$*-line-window-side
    ($eval
-    (cond
-     ((eq '$1 '$*) ''bottom)
-     (t ''top)))
+    (pcase '$*
+      ('$1 ''bottom)
+      (_ ''top)))
    "Side of the frame where $*-line will be displayed."
    :group 'per-frame-$*-line
    :type '(choice
            (const :tag "At the bottom" :value bottom)
-           (const :tag "At the top" :value top)))
+           (const :tag "At the top" :value top))
+   :set (lambda (sym val)
+          (custom-set-default sym val)
+          (when per-frame-$*-line-mode
+            (when (fboundp 'per-frame-$*-line-regenerate-display-buffer-alist-entry)
+              (per-frame-$*-line-regenerate-display-buffer-alist-entry))
+            (when (fboundp 'per-frame-$*-line--recreate-display)
+              (per-frame-$*-line--recreate-display)))))
 
  (defcustom per-frame-$*-line-window-slot
-   (cond
-    ((eq 'bottom per-frame-$*-line-window-side) 1)
-    (t -1))
+   (pcase per-frame-$*-line-window-side
+     ('bottom 10)
+     (_ -1))
    "Slot to use for side window."
    :group 'per-frame-$*-line
    :type '(choice
            (const :tag "Middle slot" :value nil)
            (iteger :tag "See doc for `display-buffer-in-side-window'"
-                   :value 0)))
+                   :value 0))
+   :set (lambda (sym val)
+          (custom-set-default sym val)
+          (when per-frame-$*-line-mode
+            (when (fboundp 'per-frame-$*-line-regenerate-display-buffer-alist-entry)
+              (per-frame-$*-line-regenerate-display-buffer-alist-entry))
+            (when (fboundp 'per-frame-$*-line--recreate-display)
+              (per-frame-$*-line--recreate-display)))))
 
 
  (defvar per-frame-$*-line--buffer nil
@@ -197,11 +218,14 @@ while manipulating $0/$1-line windows."
    "Name of the buffer used to display $*-line."
    :group 'per-frame-$*-line
    :type 'string
-   :set #'(lambda (sym val)
-            (custom-set-default sym val)
+   :set (lambda (sym val)
+          (custom-set-default sym val)
+          (when per-frame-$*-line-mode
+            (when (fboundp 'per-frame-$*-line-regenerate-display-buffer-alist-entry)
+              (per-frame-$*-line-regenerate-display-buffer-alist-entry))
             (when (buffer-live-p per-frame-$*-line--buffer)
               (with-current-buffer per-frame-$*-line--buffer
-                (rename-buffer val)))))
+                (rename-buffer val))))))
 
  (defvar per-frame-$*-line-display-buffer-alist-entry)
 
@@ -233,7 +257,12 @@ while manipulating $0/$1-line windows."
    #'per-frame-$*-line--get-create-display-function
    "Function to create display. Optional argument -- frame."
    :group 'per-frame-$*-line
-   :type 'function)
+   :type 'function
+   :set (lambda (sym val)
+          (custom-set-default sym val)
+          (when per-frame-$*-line-mode
+            (when (fboundp 'per-frame-$*-line--recreate-display)
+              (per-frame-$*-line--recreate-display)))))
 
  (defcustom per-frame-$*-line-update-display-function
    #'per-frame-$*-line--update-display-function
