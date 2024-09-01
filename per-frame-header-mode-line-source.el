@@ -203,6 +203,31 @@ while manipulating $0/$1-line windows."
               (with-current-buffer per-frame-$*-line--buffer
                 (rename-buffer val)))))
 
+ (defvar per-frame-$*-line-display-buffer-alist-entry)
+
+ (defun per-frame-$*-line-regenerate-display-buffer-alist-entry (&optional remove)
+   (setq display-buffer-alist
+         (delq per-frame-$*-line-display-buffer-alist-entry
+               display-buffer-alist))
+   (if remove
+       (setq per-frame-$*-line-display-buffer-alist-entry nil)
+     (setq per-frame-$*-line-display-buffer-alist-entry
+           `(,(regexp-quote per-frame-$*-line-buffer-name)
+             #'display-buffer-in-side-window
+             (side . ,per-frame-$*-line-window-side) (slot . ,per-frame-$*-line-window-slot)
+             (window-height . fit-window-to-buffer) ; (window-height . ,window-safe-min-height)
+             (preserve-size . (nil . t)) (allow-no-window . t)
+             (dedicated . t) (bump-use-time . t) (inhibit-same-window . t)
+             (window-parameters . ((no-other-window . t)
+                                   (no-delete-other-windows . t)))))
+     (add-to-list 'display-buffer-alist
+                  per-frame-$*-line-display-buffer-alist-entry))
+   per-frame-$*-line-display-buffer-alist-entry)
+
+ (defvar per-frame-$*-line-display-buffer-alist-entry nil
+   "Element for the `display-buffer-alist'.")
+
+ (per-frame-$*-line-regenerate-display-buffer-alist-entry)
 
  (defcustom per-frame-$*-line-get-create-display-function
    #'per-frame-$*-line--get-create-display-function
