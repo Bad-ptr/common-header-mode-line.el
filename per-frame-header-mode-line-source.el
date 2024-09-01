@@ -682,6 +682,23 @@ while manipulating $0/$1-line windows."
             'per-frame-$@-line-ignore-frame-functions frame)
      (per-frame-$*-line--get-create-display frame)))
 
+ (defun per-frame-$@-line--can-delete-window-p (win &optional frame)
+   (unless frame (setq frame (window-frame win)))
+   (if (or per-frame-$0-line-mode per-frame-$1-line-mode)
+       (not
+        (or (window-parameter win 'per-frame-$0-line-window)
+            (window-parameter win 'per-frame-$1-line-window)
+            (< (length (window-list frame 0 win)) 3)))
+     t))
+
+ (defmacro with-suspended-per-frame-$@-line (&rest body)
+   `(progn
+      (per-frame-$@-line--sleep)
+      (unwind-protect
+          (progn ,@body)
+        (per-frame-$@-line--wake))))
+
+
  (defadvice delete-window
      (around per-frame-$@-line--delete-window-adv)
    (let ((win (or (ad-get-arg 0) (selected-window))))
@@ -818,25 +835,6 @@ while manipulating $0/$1-line windows."
                         #'per-frame-$*-line--init-new-frame)
            (per-frame-$*-line-regenerate-display-buffer-alist-entry t))
        (per-frame-$@-line--wake))))
-
- (defun per-frame-$@-line--can-delete-window-p (win &optional frame)
-   (unless frame (setq frame (window-frame win)))
-   (if (or per-frame-$0-line-mode per-frame-$1-line-mode)
-       (not
-        (or (window-parameter win 'per-frame-$0-line-window)
-            (window-parameter win 'per-frame-$1-line-window)
-            (< (length (window-list frame 0 win)) 3)))
-     t))
-
-
- (defmacro with-suspended-per-frame-$@-line (&rest body)
-   `(progn
-      (let (window-configuration-change-hook)
-        (per-frame-$@-line--sleep))
-      (unwind-protect
-          (progn ,@body)
-        (let (window-configuration-change-hook)
-          (per-frame-$@-line--wake)))))
 
 
  (:autoload
