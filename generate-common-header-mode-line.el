@@ -65,7 +65,8 @@
 (defvar common-header-mode-line-generated-code nil)
 (setq common-header-mode-line-generated-code
       (common-code-substitute-1
-       `((items . ("header" "mode")))
+       (copy-alist
+        `((items . ("header" "mode"))))
        (with-current-buffer
            (find-file-noselect
             common-header-mode-line-input-filename)
