@@ -478,7 +478,9 @@ while manipulating $0/$1-line windows."
         (unwind-protect
             (condition-case err
                 (per-frame-$@-line--fit-window-to-buffer win 'height)
-              (error (message "[ERROR] per-frame-$@-line: %S" err)))
+              (error
+               (message "[common-$@-line] Error: per-frame-$@-line--init-window-with-buffer -- %S"
+                        err)))
           (set-window-dedicated-p win (if win-side 'side t))
           (setf (buffer-local-value 'window-size-fixed buf) ;; 'height
                 t)
@@ -717,7 +719,7 @@ while manipulating $0/$1-line windows."
      (if (and (not per-frame-$@-line--inhibit-delete-window-advice)
               (not (per-frame-$@-line--can-delete-window-p win)))
          (progn
-           (message "per-frame-$@-line Error: Deletion of $0/$1-line window is not allowed.")
+           (message "[common-$@-line] Error: Deletion of $0/$1-line window is not allowed.")
            nil)
        ad-do-it)))
 
