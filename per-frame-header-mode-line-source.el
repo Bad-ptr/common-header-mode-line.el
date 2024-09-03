@@ -737,48 +737,42 @@ while manipulating $0/$1-line windows."
         ad-do-it)
      ad-do-it))
 
- (defadvice window-state-get
-     (around per-frame-$@-line--window-state-get-adv)
-   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
-            (not per-frame-$@-line--inhibit-window-conf-advices))
-       (let* ((win (ad-get-arg 0))
-              (frame (window-frame win))
-              ourwin-p)
-         ($subloop
-          (when (eq win (per-frame-$*-line-get-window frame))
-            (setq ourwin-p)))
-         (with-suspended-per-frame-$@-line
-          (if ourwin-p
-              ad-do-it
-            (per-frame-$@-line-with-no-emacs-window-hooks
-             (()) ;; (frame ())
-             ($subloop
-              (per-frame-$*-line--kill-display
-               (frame-parameter frame 'per-frame-$*-line-display))))
-            ad-do-it)))
-     ad-do-it))
-
- (defadvice window-state-put
-     (around per-frame-$@-line--window-state-put-adv)
-   (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
-            (not per-frame-$@-line--inhibit-window-conf-advices))
-       (let* ((win (ad-get-arg 1))
-              (frame (window-frame win))
-              ourwin-p)
-         ($subloop
-          (when (eq win (per-frame-$*-line-get-window frame))
-            (setq ourwin-p)))
-         (with-suspended-per-frame-$@-line
-          (if ourwin-p
-              ad-do-it
-            (per-frame-$@-line-with-no-emacs-window-hooks
-             (()) ;; (frame ())
-             ($subloop
-              (per-frame-$*-line--kill-display
-               (frame-parameter frame 'per-frame-$*-line-display))))
-            ad-do-it)))
-     ad-do-it))
-
+ ($eval-no-subst
+  (cons 'progn
+        (mapcar (lambda (get/put)
+                  (common-code-substitute-form
+                   (copy-alist
+                    `(,(assq 'items state)
+                      ;; (vars . ((get/put . ,get/put)))
+                      ))
+                   `(defadvice window-state-${get/put}$
+                        (around per-frame-$@-line--window-state-${get/put}$-adv)
+                      (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
+                               (not per-frame-$@-line--inhibit-window-conf-advices))
+                          (let* ((win (ad-get-arg
+                                       ($eval (if (eq '${get/put}$ 'get) 0 1))))
+                                 (frame (window-frame win))
+                                 ourwin-p)
+                            ($subloop
+                             (when (eq win (per-frame-$*-line-get-window frame))
+                               (setq ourwin-p t)))
+                            (with-suspended-per-frame-$@-line
+                             (if ourwin-p
+                                 ad-do-it
+                               (let ((root-win-p (eq win (frame-root-window frame))))
+                                 (per-frame-$@-line-with-no-emacs-window-hooks
+                                  (()) ;; (frame ())
+                                  ($subloop
+                                   (per-frame-$*-line--kill-display
+                                    (frame-parameter frame 'per-frame-$*-line-display))))
+                                 (when (and root-win-p (not (window-live-p win)))
+                                   (setq win (frame-root-window frame))
+                                   (ad-set-arg
+                                    ($eval (if (eq '${get/put}$ 'get) 0 1))
+                                    win))
+                                 ad-do-it))))
+                        ad-do-it))))
+                '("get" "put"))))
 
  (defun per-frame-$*-line--activate (&optional frames)
    (unless (and frames (listp frames))
