@@ -216,8 +216,9 @@
       (t (funcall satomf state tree)))))
 
 (defun common-code-substitute-form (state form)
-  (let (ret)
-    (let ((i-tems (alist-get 'items state))
+  (let (ret (blk-type (alist-get 'block-type state 'progn)))
+    (let ((i-tems (or (alist-get 'items state)
+                      (list "")))
           (running t)
           temp)
       (setf (alist-get 'n state 0) 0)
@@ -236,18 +237,21 @@
               (setq i-tems (cdr i-tems)))
           (setq running nil))))
     (if (cdr ret)
-        (cons (alist-get 'block-type state 'progn)
-              ret)
+        (if blk-type
+            (cons blk-type ret)
+          ret)
       (car ret))))
 
 (defun common-code-substitute-forms (state forms)
-  (cons
-   (alist-get 'block-type state 'progn)
-   (mapcar (apply-partially
-            (alist-get 'subst-formf state
-                       #'common-code-substitute-form)
-            state)
-           forms)))
+  (let ((blk-type (alist-get 'block-type state 'progn))
+        (blk (mapcar (apply-partially
+                      (alist-get 'subst-formf state
+                                 #'common-code-substitute-form)
+                      state)
+                     forms)))
+    (if blk-type
+        (cons blk-type blk)
+      blk)))
 
 (defun common-code-substitute-1
     (state forms)
@@ -285,27 +289,39 @@ The `STATE' is an alist."
 
 
 (defun common-code-${}$-substitute-str (state str)
-  (while (string-match "^.*\\(${.*}\\$\\).*$" str)
-    (let ((code-str (match-string 1 str))
-          cread (start 0) code-to-eval fun)
-      (setq code-str
-            (string-remove-prefix
-             "${" (string-remove-suffix "}$" code-str)))
-      (while (cl-destructuring-bind (code . end)
-                 (condition-case nil
-                     (read-from-string code-str start)
-                   (error (list nil)))
-               (when code
-                 (setq start end)
-                 (push code code-to-eval)
-                 t)))
-      (setq code-to-eval (nreverse code-to-eval)
-            fun (eval `(lambda (state code) ,@code-to-eval)))
-      (setf (alist-get 'type state) '${}$)
-      (setq str (concat
-                 (substring str 0 (match-beginning 1))
-                 (format "%s" (funcall fun state code-to-eval))
-                 (substring str (match-end 1))))))
+  (let ((start 0))
+    (while (string-match "\\(${.+?}\\$\\)" str start)
+      (let ((code-str (match-string 1 str))
+            (varalist (alist-get 'vars state)) varcons
+            cread (code-start 0) code-to-eval fun)
+        (setq start (match-end 1))
+        (setq code-str
+              (string-remove-prefix
+               "${" (string-remove-suffix "}$" code-str)))
+        (while (cl-destructuring-bind (code . code-end)
+                   (condition-case nil
+                       (read-from-string code-str code-start)
+                     (error (list nil)))
+                 (when code
+                   (setq code-start code-end)
+                   (when (and varalist (symbolp code)
+                              (setq varcons (assq code varalist)))
+                     (setq code (cdr varcons)))
+                   (push code code-to-eval)
+                   t)))
+        (setq code-to-eval (nreverse code-to-eval)
+              fun (eval `(lambda (state code) ,@code-to-eval)))
+        (setf (alist-get 'type state) '${}$)
+        (setq str (concat
+                   (substring str 0 (match-beginning 1))
+                   (format "%s" (condition-case err
+                                    (prog1
+                                      (funcall fun state code-to-eval)
+                                      (setq start (match-beginning 1)))
+                                  (error
+                                   (message "common-code-${}$-substitute-str Error: %S -- %S" str err)
+                                   (concat "${" code-str "}$"))))
+                   (substring str (match-end 1)))))))
   str)
 
 (defun common-code-$@-substitute-str (state str)
