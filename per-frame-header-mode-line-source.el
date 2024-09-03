@@ -549,8 +549,20 @@ while manipulating $0/$1-line windows."
      (per-frame-$@-line-with-no-emacs-window-hooks
       (()) ;; (win ())
       (set-window-dedicated-p win nil)
-      (let ((per-frame-$@-line--inhibit-delete-window-advice t))
-        (delete-window win))))
+      (let ((per-frame-$@-line--inhibit-delete-window-advice t)
+            need-to-delete)
+        (setq need-to-delete
+              (condition-case _err
+                  (delete-window win)
+                (error t)))
+        (when need-to-delete
+          (let ((ignore-window-parameters t)
+                (window--sides-inhibit-check t))
+            (condition-case err
+                (delete-window win)
+              (error
+               (message "[common-$@-line] Error: per-frame-$*-line--kill-window -- %S"
+                        err))))))))
    (per-frame-$*-line-set-window nil frame))
 
 
