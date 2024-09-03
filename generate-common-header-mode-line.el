@@ -74,18 +74,18 @@
 
 (defun common-code-pp (forms)
   (mapconcat
-   #'(lambda (form)
-       (cl-typecase form
-         (symbol (symbol-name form))
-         (string form)
-         (cons
-          (cl-case (car form)
-            (:text (common-code-pp (cdr form)))
-            (:autoload (concat ";;;###autoload\n"
-                               (common-code-pp (cdr form))))
-            (progn (common-code-pp (cdr form)))
-            (t (pp-to-string form))))
-         (t (pp-to-string form))))
+   (lambda (form)
+     (cl-typecase form
+       (symbol (symbol-name form))
+       (string form)
+       (cons
+        (cl-case (car form)
+          (:text (common-code-pp (cdr form)))
+          (:autoload (concat ";;;###autoload\n"
+                             (common-code-pp (cdr form))))
+          (progn (common-code-pp (cdr form)))
+          (t (pp-to-string form))))
+       (t (pp-to-string form))))
    forms "\n"))
 
 

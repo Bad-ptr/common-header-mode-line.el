@@ -45,13 +45,13 @@
 (defun common-code-splice-list (input &optional splice-sym)
   (unless splice-sym (setq splice-sym '$splice))
   (let (ret)
-    (mapc #'(lambda (it)
-              (if (and it (listp it) (listp (cdr it))
-                       (eq splice-sym (car it)))
-                  (mapc #'(lambda (it)
-                            (push it ret))
-                        (cdr it))
-                (push it ret)))
+    (mapc (lambda (it)
+            (if (and it (listp it) (listp (cdr it))
+                     (eq splice-sym (car it)))
+                (mapc (lambda (it)
+                        (push it ret))
+                      (cdr it))
+              (push it ret)))
           input)
     (nreverse ret)))
 
@@ -73,67 +73,67 @@
   (defun common-code-in-out-stack--map (tree fun)
     (common-code-in-out-stack-map
      (cons (list (list tree 'ret 0)) nil)
-     #'(lambda (in-out-stack)
-         (cl-destructuring-bind (in-stack . out-stack)
-             in-out-stack
-           (when in-stack
-             (funcall fun (pop-stack in-stack)
-                      in-stack out-stack))))))
+     (lambda (in-out-stack)
+       (cl-destructuring-bind (in-stack . out-stack)
+           in-out-stack
+         (when in-stack
+           (funcall fun (pop-stack in-stack)
+                    in-stack out-stack))))))
 
   (defun common-code-in-out-stack-tree--map
       (tree fun &optional per-item-fun splice-sym)
     (common-code-in-out-stack--map
      tree
-     #'(lambda (in-cur in-stack out-stack)
-         (cl-destructuring-bind
-             (in-item in-part in-level &rest _rest)
-             in-cur
+     (lambda (in-cur in-stack out-stack)
+       (cl-destructuring-bind
+           (in-item in-part in-level &rest _rest)
+           in-cur
 
-           (when per-item-fun
-             (setq in-item (funcall per-item-fun in-item))
-             (setcar in-cur in-item))
+         (when per-item-fun
+           (setq in-item (funcall per-item-fun in-item))
+           (setcar in-cur in-item))
 
-           (while (and out-stack
-                       (< in-level (cadar out-stack)))
-             (pop-stack out-stack))
+         (while (and out-stack
+                     (< in-level (cadar out-stack)))
+           (pop-stack out-stack))
 
-           (cl-typecase in-item
-             (cons
-              (setq in-item
-                    (common-code-splice-list in-item splice-sym))
-              (cl-destructuring-bind
-                  (out-item out-level &rest _rest)
-                  (or (pick-stack out-stack)
-                      (list nil 0))
-                (let ((newcons (cons nil nil)))
-                  (cl-case in-part
-                    (car
-                     (setcar out-item newcons))
-                    (cdr
-                     (setcdr out-item newcons))
-                    (t))
-                  (push-stack out-stack newcons (1+ out-level))))
-              (push-stack in-stack (cdr in-item) 'cdr (1+ in-level))
-              (push-stack in-stack (car in-item) 'car (1+ in-level)))
-             (t
-              (let ((ret (funcall fun in-item)))
-                (if out-stack
-                    (cl-destructuring-bind
-                        (out-item out-level &rest _rest)
-                        (pop-stack out-stack)
-                      (cl-case in-part
-                        (car
-                         (setcar out-item ret)
-                         (push-stack out-stack out-item out-level))
-                        (cdr
-                         (setcdr out-item ret)
-                         (unless out-stack
-                           (push-stack out-stack out-item out-level)))
-                        (t
-                         (setq out-item ret)
-                         (push-stack out-stack out-item out-level))))
-                  (push-stack out-stack ret 0)))))
-           (cons in-stack out-stack)))))
+         (cl-typecase in-item
+           (cons
+            (setq in-item
+                  (common-code-splice-list in-item splice-sym))
+            (cl-destructuring-bind
+                (out-item out-level &rest _rest)
+                (or (pick-stack out-stack)
+                    (list nil 0))
+              (let ((newcons (cons nil nil)))
+                (cl-case in-part
+                  (car
+                   (setcar out-item newcons))
+                  (cdr
+                   (setcdr out-item newcons))
+                  (t))
+                (push-stack out-stack newcons (1+ out-level))))
+            (push-stack in-stack (cdr in-item) 'cdr (1+ in-level))
+            (push-stack in-stack (car in-item) 'car (1+ in-level)))
+           (t
+            (let ((ret (funcall fun in-item)))
+              (if out-stack
+                  (cl-destructuring-bind
+                      (out-item out-level &rest _rest)
+                      (pop-stack out-stack)
+                    (cl-case in-part
+                      (car
+                       (setcar out-item ret)
+                       (push-stack out-stack out-item out-level))
+                      (cdr
+                       (setcdr out-item ret)
+                       (unless out-stack
+                         (push-stack out-stack out-item out-level)))
+                      (t
+                       (setq out-item ret)
+                       (push-stack out-stack out-item out-level))))
+                (push-stack out-stack ret 0)))))
+         (cons in-stack out-stack)))))
 
   (defun common-code-tree-map (tree fun &optional per-item-fun splice-sym)
     (let
@@ -149,8 +149,8 @@
   (let ((substitutors (alist-get 'str-substitutors state
                                  common-code-default-str-substitutors)))
     (cl-reduce
-     #'(lambda (str funcons)
-         (funcall (cdr funcons) state str))
+     (lambda (str funcons)
+       (funcall (cdr funcons) state str))
      substitutors :initial-value str)))
 
 (defun common-code-substitute-sym (state sym)
@@ -274,13 +274,13 @@ The `STATE' is an alist."
     `(let ((,prefix-sym ,prefix)
            (,suffix-sym ,suffix))
        (mapcar
-        #'(lambda (key)
-            (cons key
-                  (intern
-                   (concat
-                    ,prefix-sym
-                    (symbol-name key)
-                    ,suffix-sym))))
+        (lambda (key)
+          (cons key
+                (intern
+                 (concat
+                  ,prefix-sym
+                  (symbol-name key)
+                  ,suffix-sym))))
         ,keys))))
 
 
