@@ -5,7 +5,7 @@
 ;; Author: Constantin Kulikov (Bad_ptr) <zxnotdead@gmail.com>
 ;; Version: 0.2
 ;; Package-Requires: ()
-;; Date: 2017/01/27 15:26:17
+;; Date: 2024/09/03 11:04:09
 ;; License: GPL either version 3 or any later version
 ;; Keywords: mode-line, header-line, convenience, frames, windows, ui
 ;; URL: https://github.com/Bad-ptr/common-header-mode-line.el
@@ -216,13 +216,14 @@
       (t (funcall satomf state tree)))))
 
 (defun common-code-substitute-form (state form)
-  (let (ret (blk-type (alist-get 'block-type state 'progn)))
+  (let ((blk-type (alist-get 'block-type state 'progn))
+        ret)
     (let ((i-tems (or (alist-get 'items state)
                       (list "")))
           (running t)
           temp)
-      (setf (alist-get 'n state 0) 0)
-      (setf (alist-get 'form-loop state) nil)
+      (setf (alist-get 'item-loop-n state 0) 0)
+      (setf (alist-get 'item-loop state) nil)
       (while (and i-tems running)
         (setq temp
               (funcall
@@ -231,24 +232,44 @@
                state form))
         (when temp
           (push temp ret))
-        (if (alist-get 'form-loop state)
+        (if (alist-get 'item-loop state)
             (progn
-              (cl-incf (alist-get 'n state 0))
+              (cl-incf (alist-get 'item-loop-n state 0))
               (setq i-tems (cdr i-tems)))
           (setq running nil))))
+    (setq ret (nreverse ret))
     (if (cdr ret)
         (if blk-type
             (cons blk-type ret)
           ret)
       (car ret))))
 
+(defun common-code-flatten-blocks (blk-type blocks)
+  (nreverse
+   (cl-reduce (lambda (acc it)
+                (if (and (listp it) (eq (car it) blk-type))
+                    (cl-reduce (lambda (acc it)
+                                 (cons it acc))
+                               (cdr it) :initial-value acc)
+                  (cons it acc)))
+              blocks :initial-value nil)))
+
+(defun common-code-replace-car (o-car n-car blk)
+  (if (and (listp blk) (eq (car blk) o-car))
+      (cons n-car (cdr blk))
+    blk))
+
 (defun common-code-substitute-forms (state forms)
-  (let ((blk-type (alist-get 'block-type state 'progn))
-        (blk (mapcar (apply-partially
-                      (alist-get 'subst-formf state
-                                 #'common-code-substitute-form)
-                      state)
-                     forms)))
+  (let ((blk-type (prog1 (alist-get 'block-type state 'progn)
+                    ;; (setf (alist-get 'block-type state 'progn) nil)
+                    nil))
+        (blk (common-code-flatten-blocks
+              'progn
+              (mapcar (apply-partially
+                       (alist-get 'subst-formf state
+                                  #'common-code-substitute-form)
+                       state)
+                      forms))))
     (if blk-type
         (cons blk-type blk)
       blk)))
@@ -299,7 +320,7 @@ The `STATE' is an alist."
               (string-remove-prefix
                "${" (string-remove-suffix "}$" code-str)))
         (while (cl-destructuring-bind (code . code-end)
-                   (condition-case nil
+                   (condition-case-unless-debug nil
                        (read-from-string code-str code-start)
                      (error (list nil)))
                  (when code
@@ -314,7 +335,7 @@ The `STATE' is an alist."
         (setf (alist-get 'type state) '${}$)
         (setq str (concat
                    (substring str 0 (match-beginning 1))
-                   (format "%s" (condition-case err
+                   (format "%s" (condition-case-unless-debug err
                                     (prog1
                                       (funcall fun state code-to-eval)
                                       (setq start (match-beginning 1)))
@@ -325,36 +346,53 @@ The `STATE' is an alist."
   str)
 
 (defun common-code-$@-substitute-str (state str)
-  (while (string-match "^.*\\($@\\).*$" str)
-    (setf (alist-get 'type state) '$@)
-    (setq str (concat
-               (substring str 0 (match-beginning 1))
-               (mapconcat #'identity (alist-get 'items state)
-                          (alist-get 'items-sep state "-"))
-               (substring str (match-end 1)))))
+  (let ((start 0)
+        (items-str ""))
+    (while (string-match "\\($@\\)" str start)
+      (setf (alist-get 'type state) '$@)
+      (setq items-str
+            (mapconcat #'identity (alist-get 'items state)
+                       (alist-get 'items-sep state "-")))
+      (setq str (concat
+                 (substring str 0 (match-beginning 1))
+                 items-str
+                 (substring str (match-end 1))))
+      (setq start (+ (match-beginning 1)
+                     (string-width items-str)))))
   str)
 
 (defun common-code-$n-substitute-str (state str)
-  (while (string-match "^.*\\($[0-9]+\\).*$" str)
-    (let (($n (nth (string-to-number
-                    (substring (match-string 1 str) 1))
-                   (alist-get 'items state))))
+  (let ((start 0)
+        (item-str ""))
+    (while (string-match "\\($[0-9]+\\)" str start)
       (setf (alist-get 'type state) '$n)
+      (setq item-str
+            (nth (string-to-number
+                  (substring (match-string 1 str) 1))
+                 (alist-get 'items state)))
       (setq str (concat
                  (substring str 0 (match-beginning 1))
-                 $n
-                 (substring str (match-end 1))))))
+                 item-str
+                 (substring str (match-end 1))))
+      (setq start (+ (match-beginning 1)
+                     (string-width item-str)))))
   str)
 
 (defun common-code-$*-substitute-str (state str)
-  (while (string-match "^.*\\($\\\*\\).*$" str)
-    (setf (alist-get 'type state) '$*)
-    (setf (alist-get 'form-loop state) t)
-    (setq str (concat
-               (substring str 0 (match-beginning 1))
-               (nth (alist-get 'n state 0)
-                    (alist-get 'items state))
-               (substring str (match-end 1)))))
+  (let ((start 0)
+        (item-str ""))
+    (while (string-match "\\($\\\*\\)" str start)
+      (setf (alist-get 'type state) '$*)
+      (setf (alist-get 'item-loop state) t)
+      (setq item-str
+            (nth (alist-get 'item-loop-n state 0)
+                 (alist-get 'items state)))
+      (setq str (concat
+                 (substring str 0 (match-beginning 1))
+                 item-str
+                 (substring str (match-end 1))))
+      (setq start (+ (match-beginning 1)
+                     (string-width item-str)))))
   str)
 
 
@@ -377,6 +415,35 @@ The `STATE' is an alist."
    '($@- $@_)
    "-substitute-sym"))
 
+
+(defun common-code-$subst-substitute-cons (state cons)
+  (setq cons (cdr cons))
+  (common-code-substitute-tree state cons))
+
+(defun common-code-$no-subst-substitute-cons (state cons)
+  (setq cons (cdr cons))
+  (if (and (listp cons) (null (cdr cons)))
+      (car cons)
+    cons))
+
+(defun common-code-$cons-substitute-cons (state cons)
+  (setq cons (cdr cons))
+  (let ((kar (car cons))
+        (kdr (cdr cons)))
+    (cons
+     (common-code-substitute-tree state kar)
+     (progn
+       (when (and (listp kdr) (null (cdr kdr)))
+         (setq kdr (car kdr)))
+       (common-code-substitute-tree state kdr)))))
+
+(defun common-code-$car->-substitute-cons (state cons)
+  (setq cons (cdr cons))
+  (pcase cons
+    (`(,from ,to . ,rest) (common-code-replace-car
+                          from to
+                          (common-code-substitute-tree state (car rest))))
+    (_ cons)))
 
 (defun common-code-$eval-no-subst-substitute-cons (state cons)
   (let ((fu (cdr cons)))
@@ -404,19 +471,38 @@ The `STATE' is an alist."
      state
      (cons '$with-state (cons new-state (cdr cons))))))
 
-(defun common-code-$_subforms-substitute-cons (state cons)
+(defun common-code-$forms-substitute-cons (state cons)
   (common-code-substitute-forms state (cdr cons)))
 
-(defun common-code-$subloop-substitute-cons (state cons)
+(defun common-code-$subforms-substitute-cons (state cons)
   (setq cons (cdr cons))
   (common-code-$with-derived-state-substitute-cons
-   state (cons '$with-derived-state (cons (list) (cons '$_subforms cons)))))
+   state (cons '$with-derived-state (cons (list) (cons '$forms cons)))))
+
+(defun common-code-$varloop-substitute-cons (state cons)
+  (setq cons (cdr cons))
+  (let* ((varloopdef (prog1 (car cons)
+                       (setq cons (cdr cons))))
+         (varname (car varloopdef)))
+    (if (cadr varloopdef)
+        (mapcan (lambda (varvalue)
+                  (common-code-$with-derived-state-substitute-cons
+                   state
+                   (cons '$with-derived-state
+                         (cons (list
+                                (cons 'vars (cons
+                                             (cons varname varvalue)
+                                             (assq-delete-all varname
+                                                              (alist-get 'vars state)))))
+                               cons))))
+                (cadr varloopdef))
+      (common-code-substitute-tree state cons))))
 
 (defvar common-code-default-cons-substitutors
   (common-code-def-alist-key-fun
    "common-code-"
-   '($eval-no-subst $eval $with-state $with-derived-state
-                    $subloop $_subforms)
+   '($subst $no-subst $cons $car-> $eval-no-subst $eval $with-state $with-derived-state
+            $forms $subforms $varloop)
    "-substitute-cons"))
 
 

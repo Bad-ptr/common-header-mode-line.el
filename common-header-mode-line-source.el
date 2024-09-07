@@ -249,9 +249,9 @@ Functions must accept unknown number of arguments."
     :init-value nil
     :global     t
     (if common-$@-line-mode
-        ($subloop
+        ($subforms
          (common-$*-line-mode 1))
-      ($subloop
+      ($subforms
        (common-$*-line-mode -1)))))
 
 

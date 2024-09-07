@@ -129,14 +129,14 @@
    :group 'per-window-$*-line)
 
  (defface per-window-$*-line-inactive-face
-   '((default :inherit $1-line-inactive :height 3))
-   "Face to use for per-window $1-line when window is inactive."
+   '((default :inherit mode-line-inactive :height 3))
+   "Face to use for per-window $*-line when window is inactive."
    :group 'per-window-$*-line)
 
  (defun per-window-$*-line--format-function (win)
    "Default format function."
    ($eval
-    (if (eq '$1 '$*)
+    (if (eq 'mode '$*)
         " "
       nil)))
 
@@ -153,7 +153,7 @@
                      (or (buffer-local-value '$*-line-format buf)
                          :nil)))
        ($eval
-        (if (eq '$1 '$*)
+        (if (eq 'mode '$*)
             '(progn
                (unless per-window-$*-line--face-remap-cookies
                  (push (face-remap-add-relative
@@ -180,7 +180,7 @@
      (unless (run-hook-with-args-until-success
               'per-window-$@-line-ignore-buffer-functions
               buf)
-       ($subloop
+       ($subforms
         (per-window-$*-line--update-window win buf)))))
 
  (defun per-window-$@-line-update-all-windows (&optional all-frames)
@@ -216,7 +216,7 @@
      (with-current-buffer buf
        (when per-window-$*-line--face-remap-cookies
          ($eval
-          (if (eq '$1 '$*)
+          (if (eq 'mode '$*)
               '(while per-window-$*-line--face-remap-cookies
                  (face-remap-remove-relative
                   (pop per-window-$*-line--face-remap-cookies)))
@@ -228,10 +228,10 @@
              (setq-local $*-line-format nil)
            (setq-local $*-line-format per-window-$*-line--saved-emacs-format))
          (setq-local per-window-$*-line--saved-emacs-format nil))))
-   ($subloop
+   ($subforms
     (progn
       ($eval
-       (when (eq '$* '$1)
+       (when (eq 'mode '$*)
          '(face-spec-recalc '$*-line-inactive nil)))
       (face-spec-recalc '$*-line nil))))
 
@@ -258,9 +258,9 @@ of visible buffers."
     :init-value nil
     :global     t
     (if per-window-$@-line-mode
-        ($subloop
+        ($subforms
          (per-window-$*-line-mode 1))
-      ($subloop
+      ($subforms
        (per-window-$*-line-mode -1)))))
 
 

@@ -101,7 +101,7 @@
    "Used to track current window.")
 
  (defvar per-frame-$@-line--inhibit-delete-window-advice nil
-   "Used to locally allow deleting $0/$0-line windows.")
+   "Used to locally allow deleting $0/$1-line windows.")
 
  (defvar per-frame-$@-line--inhibit-window-conf-advices nil
    "Temporarily disable window-configuration advices.")
@@ -177,7 +177,7 @@ while manipulating $0/$1-line windows."
  (defcustom per-frame-$*-line-window-side
    ($eval
     (pcase '$*
-      ('$1 ''bottom)
+      ('mode ''bottom)
       (_ ''top)))
    "Side of the frame where $*-line will be displayed."
    :group 'per-frame-$*-line
@@ -195,7 +195,7 @@ while manipulating $0/$1-line windows."
  (defcustom per-frame-$*-line-window-slot
    (pcase per-frame-$*-line-window-side
      ('bottom 10)
-     (_ -1))
+     (_ -10))
    "Slot to use for side window."
    :group 'per-frame-$*-line
    :type '(choice
@@ -295,6 +295,7 @@ while manipulating $0/$1-line windows."
    (apply per-frame-$@-line--apply-with-no-emacs-window-hooks fun args))
 
  (defmacro per-frame-$@-line-with-no-emacs-window-hooks (vars &rest body)
+   (declare (indent 1))
    `(apply per-frame-$@-line--apply-with-no-emacs-window-hooks
            (lambda ,(butlast vars) ,@body) ,@vars))
 
@@ -311,7 +312,7 @@ while manipulating $0/$1-line windows."
      (font-lock-mode -1)
      (buffer-disable-undo)
      ;; (toggle-truncate-lines 1)
-     ($subloop
+     ($subforms
       (setq-local $*-line-format nil))
      (setq-local
       ;; window-size-fixed t
@@ -404,7 +405,7 @@ while manipulating $0/$1-line windows."
      (mapc (lambda (wpc) (set-window-parameter win-left (car wpc) (cdr wpc)))
            right-parameters)
      (let (hml-win)
-       ($subloop
+       ($subforms
         (progn
           (setq hml-win (per-frame-$*-line-get-window frame))
           (per-frame-$*-line-set-window
@@ -626,10 +627,10 @@ while manipulating $0/$1-line windows."
        (let* (($*-l-str
                (format-mode-line
                 ($eval
-                 (if (eq '$1 '$*)
-                     `(list "" '(eldoc-$1-line-string
-                                 (" " eldoc-$1-line-string " "))
-                            (default-value '$1-line-format))
+                 (if (eq 'mode '$*)
+                     `(list "" '(eldoc-mode-line-string
+                                 (" " eldoc-mode-line-string " "))
+                            (default-value 'mode-line-format))
                    `(default-value '$*-line-format)))
                 'per-frame-$*-line-face
                 per-frame-$@-line--selected-window))
@@ -641,7 +642,7 @@ while manipulating $0/$1-line windows."
           ;; (concat $*-l-str (propertize (make-string fill-w ?\ )
           ;;                              'face 'per-frame-$*-line-face))
           $*-l-str))
-       ($subloop
+       ($subforms
         (setq-local $*-line-format nil))
        (goto-char (point-min))
        (setq-local buffer-read-only t))))
@@ -671,7 +672,7 @@ while manipulating $0/$1-line windows."
        (per-frame-$*-line--update-display display))))
 
  (defun per-frame-$@-line--update (&rest args)
-   ($subloop
+   ($subforms
     (when per-frame-$*-line-mode
       (apply #'per-frame-$*-line--update (selected-frame) args)))
    t)
@@ -730,49 +731,44 @@ while manipulating $0/$1-line windows."
        (with-suspended-per-frame-$@-line
         (per-frame-$@-line--apply-with-no-emacs-window-hooks
          (lambda (frame)
-           ($subloop
+           ($subforms
             (per-frame-$*-line--kill-display
              (frame-parameter frame 'per-frame-$*-line-display))))
          (or (ad-get-arg 0) (selected-frame)))
         ad-do-it)
      ad-do-it))
 
- ($eval-no-subst
-  (cons 'progn
-        (mapcar (lambda (get/put)
-                  (common-code-substitute-form
-                   (copy-alist
-                    `(,(assq 'items state)
-                      ;; (vars . ((get/put . ,get/put)))
-                      ))
-                   `(defadvice window-state-${get/put}$
-                        (around per-frame-$@-line--window-state-${get/put}$-adv)
-                      (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
-                               (not per-frame-$@-line--inhibit-window-conf-advices))
-                          (let* ((win (ad-get-arg
-                                       ($eval (if (eq '${get/put}$ 'get) 0 1))))
-                                 (frame (window-frame win))
-                                 ourwin-p)
-                            ($subloop
-                             (when (eq win (per-frame-$*-line-get-window frame))
-                               (setq ourwin-p t)))
-                            (with-suspended-per-frame-$@-line
-                             (if ourwin-p
-                                 ad-do-it
-                               (let ((root-win-p (eq win (frame-root-window frame))))
-                                 (per-frame-$@-line-with-no-emacs-window-hooks
-                                  (()) ;; (frame ())
-                                  ($subloop
-                                   (per-frame-$*-line--kill-display
-                                    (frame-parameter frame 'per-frame-$*-line-display))))
-                                 (when (and root-win-p (not (window-live-p win)))
-                                   (setq win (frame-root-window frame))
-                                   (ad-set-arg
-                                    ($eval (if (eq '${get/put}$ 'get) 0 1))
-                                    win))
-                                 ad-do-it))))
-                        ad-do-it))))
-                '("get" "put"))))
+ ($cons progn
+        ($varloop
+         (get/put ("get" "put"))
+         (defadvice window-state-${get/put}$
+             (around per-frame-$@-line--window-state-${get/put}$-adv)
+           (if (and (or per-frame-$0-line-mode per-frame-$1-line-mode)
+                    (not per-frame-$@-line--inhibit-window-conf-advices))
+               (let* ((win (ad-get-arg
+                            ($eval (if (eq '${get/put}$ 'get) 0 1))))
+                      (frame (window-frame win))
+                      ourwin-p)
+                 ($subforms
+                  (when (eq win (per-frame-$*-line-get-window frame))
+                    (setq ourwin-p t)))
+                 (with-suspended-per-frame-$@-line
+                  (if ourwin-p
+                      ad-do-it
+                    (let ((root-win-p (eq win (frame-root-window frame))))
+                      (per-frame-$@-line-with-no-emacs-window-hooks
+                       (()) ;; (frame ())
+                       ($subforms
+                        (per-frame-$*-line--kill-display
+                         (frame-parameter frame 'per-frame-$*-line-display))))
+                      (when (and root-win-p (not (window-live-p win)))
+                        (setq win (frame-root-window frame))
+                        (ad-set-arg
+                         ($eval (if (eq '${get/put}$ 'get) 0 1))
+                         win))
+                      ad-do-it))))
+             ad-do-it))))
+
 
  (defun per-frame-$*-line--activate (&optional frames)
    (unless (and frames (listp frames))
@@ -866,9 +862,9 @@ the frame."
     :init-value nil
     :global     t
     (if per-frame-$@-line-mode
-        ($subloop
+        ($subforms
          (per-frame-$*-line-mode 1))
-      ($subloop
+      ($subforms
        (per-frame-$*-line-mode -1)))))
 
  (provide 'per-frame-$@-line)
