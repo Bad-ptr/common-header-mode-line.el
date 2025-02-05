@@ -152,6 +152,20 @@ while manipulating $0/$1-line windows."
                     (let ,per-frame-$@-line-emacs-window-hooks-to-inhibit
                       (apply fun args)))))))
 
+ (defcustom per-frame-$@-line-advices (list #'window-state-get)
+   "List of functions to activate around advices."
+   :group 'per-frame-$@-line
+   :type '(repeat symbol)
+   :set (lambda (sym val)
+          (let ((reactivatep
+                 (and (fboundp 'per-frame-$@-line--de/activate-advices)
+                      ($car-> progn or ($subforms per-frame-$*-line-mode)))))
+            (when reactivatep
+              (per-frame-$@-line--de/activate-advices))
+            (custom-set-default sym val)
+            (when reactivatep
+              (per-frame-$@-line--de/activate-advices t)))))
+
 
  (defgroup per-frame-$*-line nil
    "Customize per-frame-$*-line."
@@ -770,6 +784,17 @@ while manipulating $0/$1-line windows."
              ad-do-it))))
 
 
+ (defun per-frame-$@-line--de/activate-advices (&optional activatep)
+   (mapc (lambda (funsym)
+           (let ((adv-sym (intern (concat "per-frame-$@-line--"
+                                          (symbol-name funsym)
+                                          "-adv"))))
+             (if activatep
+                 (ad-enable-advice funsym 'around adv-sym)
+               (ad-disable-advice funsym 'around adv-sym)))
+           (ad-activate funsym))
+         per-frame-$@-line-advices))
+
  (defun per-frame-$*-line--activate (&optional frames)
    (unless (and frames (listp frames))
      (setq frames (per-frame-$@-line-frame-list)))
@@ -789,18 +814,8 @@ while manipulating $0/$1-line windows."
    (add-to-list 'window-persistent-parameters
                 '(no-delete-other-windows . writable))
 
-   ;; (ad-enable-advice #'delete-window 'around
-   ;;                   'per-frame-$@-line--delete-window-adv)
-   ;; (ad-activate #'delete-window)
-   ;; (ad-enable-advice #'current-window-configuration 'around
-   ;;                   'per-frame-$@-line--current-window-configuration-adv)
-   ;; (ad-activate #'current-window-configuration)
-   (ad-enable-advice #'window-state-get 'around
-                     'per-frame-$@-line--window-state-get-adv)
-   (ad-activate #'window-state-get)
-   (ad-enable-advice #'window-state-put 'around
-                     'per-frame-$@-line--window-state-put-adv)
-   (ad-activate #'window-state-put)
+   (per-frame-$@-line--de/activate-advices t)
+
    (add-hook 'per-window-$@-line-ignore-buffer-functions
              #'per-frame-$*-line--display-buffer-p)
    (add-hook 'after-make-frame-functions
@@ -821,18 +836,7 @@ while manipulating $0/$1-line windows."
      (if all-frames
          (progn
            (unless (or per-frame-$0-line-mode per-frame-$1-line-mode)
-             (ad-disable-advice #'delete-window 'around
-                                'per-frame-$@-line--delete-window-adv)
-             (ad-activate #'delete-window)
-             (ad-disable-advice #'current-window-configuration 'around
-                                'per-frame-$@-line--current-window-configuration-adv)
-             (ad-activate #'current-window-configuration)
-             (ad-disable-advice #'window-state-get 'around
-                                'per-frame-$@-line--window-state-get-adv)
-             (ad-activate #'window-state-get)
-             (ad-disable-advice #'window-state-put 'around
-                                'per-frame-$@-line--window-state-put-adv)
-             (ad-activate #'window-state-put))
+             (per-frame-$@-line--de/activate-advices))
            (remove-hook 'per-window-$@-line-ignore-buffer-functions
                         #'per-frame-$*-line--display-buffer-p)
            (remove-hook 'after-make-frame-functions
