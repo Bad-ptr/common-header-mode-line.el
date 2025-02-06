@@ -121,7 +121,9 @@
    :type '(repeat function))
 
  (defcustom per-frame-$@-line-ignore-window-functions
-   (list (lambda (win) (or (window-parameter win 'per-frame-$@-line-ignore)
+   (list (lambda (win) (or (not (window-live-p win))
+                      (window-parameter win 'per-frame-$@-line-ignore)
+                      (eq win (window-main-window (window-frame win)))
                       (and (featurep 'transient)
                            transient--showp
                            (eq win transient--window)))))
@@ -559,14 +561,28 @@ while manipulating $0/$1-line windows."
        (setq win (per-frame-$*-line--create-window frame display)))
      win))
 
+ (defun per-frame-$*-line--giveup-window (win &optional frame)
+   (setq frame (or frame (window-frame win)))
+   (set-window-dedicated-p win nil)
+   (mapc (lambda (wptn)
+           (set-window-parameter win wptn nil))
+         '(no-other-window
+           no-delete-other-windows
+           window-preserved-size
+           quit-restore-window
+           split-window
+           per-frame-$*-line-window))
+   (per-frame-$*-line-set-window nil frame))
+
  (defun per-frame-$*-line--check-fix-window (&optional frame)
    (let ((win (per-frame-$*-line-get-window frame)))
-     (if (window-live-p win)
-         (unless (run-hook-with-args-until-success
-                  'per-frame-$@-line-ignore-window-functions win)
-           (per-frame-$@-line--init-window-with-buffer
-            win (per-frame-$*-line--get-create-buffer)))
-       (setq win (per-frame-$*-line--create-window frame)))
+     (if (run-hook-with-args-until-success
+          'per-frame-$@-line-ignore-window-functions win)
+         (progn
+           (per-frame-$*-line--giveup-window win frame)
+           (setq win (per-frame-$*-line--create-window frame)))
+       (per-frame-$@-line--init-window-with-buffer
+        win (per-frame-$*-line--get-create-buffer)))
      win))
 
  (defun per-frame-$*-line--kill-window (&optional frame win)
