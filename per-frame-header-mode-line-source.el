@@ -297,13 +297,23 @@ while manipulating $0/$1-line windows."
    :group 'per-frame-$*-line)
 
 
- (defun per-frame-$*-line-get-window (&optional frame)
-   (frame-parameter frame 'per-frame-$*-line-window))
+ (defun per-frame-$*-line-get-window (&optional frame display)
+   (unless display
+     (setq display (per-frame-$*-line--get-create-display frame)))
+   (when display
+     (cdr (assq 'win display))))
 
- (defun per-frame-$*-line-set-window (&optional win frame)
-   (when win
-     (set-window-parameter win 'per-frame-$*-line-window t))
-   (set-frame-parameter frame 'per-frame-$*-line-window win))
+ (defun per-frame-$*-line-set-window (&optional win frame display)
+   (unless display
+     (setq display (per-frame-$*-line--get-create-display frame)))
+   (when display
+     (let* ((winc (assq 'win display))
+            (oldwin (cdr winc)))
+       (when win
+         (set-window-parameter win 'per-frame-$*-line-window t))
+       (when oldwin
+         (set-window-parameter oldwin 'per-frame-$*-line-window nil))
+       (setcdr winc win))))
 
  (defun per-frame-$@-line--apply-with-no-emacs-window-hooks (fun &rest args)
    (apply per-frame-$@-line--apply-with-no-emacs-window-hooks fun args))
@@ -533,20 +543,20 @@ while manipulating $0/$1-line windows."
                     nwin)))))
       win)))
 
- (defun per-frame-$*-line--create-window (&optional frame)
+ (defun per-frame-$*-line--create-window (&optional frame display)
    (let* ((buf (per-frame-$*-line--get-create-buffer))
           (win (per-frame-$*-line--create-window-1 frame buf)))
-     (per-frame-$*-line-set-window win frame)
+     (per-frame-$*-line-set-window win frame display)
      (per-frame-$@-line--init-window-with-buffer win buf)
      win))
 
- (defun per-frame-$*-line--get-create-window (&optional frame)
-   (let ((win (per-frame-$*-line-get-window frame)))
+ (defun per-frame-$*-line--get-create-window (&optional frame display)
+   (let ((win (per-frame-$*-line-get-window frame display)))
      (unless (window-live-p win)
        (setq win (window-with-parameter 'per-frame-$*-line-window t frame))
-       (per-frame-$*-line-set-window win frame))
+       (per-frame-$*-line-set-window win frame display))
      (unless (window-live-p win)
-       (setq win (per-frame-$*-line--create-window frame)))
+       (setq win (per-frame-$*-line--create-window frame display)))
      win))
 
  (defun per-frame-$*-line--check-fix-window (&optional frame)
@@ -620,14 +630,17 @@ while manipulating $0/$1-line windows."
          display
        (unless (run-hook-with-args-until-success
                 'per-frame-$@-line-ignore-frame-functions frame)
-         (let* ((buf (per-frame-$*-line--get-create-buffer))
-                (win (per-frame-$*-line--get-create-window frame))
-                (display (cons (cons 'buf buf)
-                               (cons (cons 'win win)
-                                     (cons (cons 'frame frame)
+         (let* ((bufc (cons 'buf nil))
+                (winc (cons 'win nil))
+                (framec (cons 'frame frame))
+                (display (cons bufc
+                               (cons winc
+                                     (cons framec
                                            nil)))))
            (set-frame-parameter frame 'per-frame-$*-line-display
                                 display)
+           (setcdr bufc (per-frame-$*-line--get-create-buffer))
+           (setcdr winc (per-frame-$*-line--get-create-window frame display))
            display)))))
 
  (defun per-frame-$*-line--get-create-display (&optional frame)
