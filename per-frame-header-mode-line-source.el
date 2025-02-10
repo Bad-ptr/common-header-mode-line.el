@@ -354,15 +354,14 @@ while manipulating $0/$1-line windows."
    b)
 
  (defun per-frame-$*-line--get-create-buffer ()
-   (if (buffer-live-p per-frame-$*-line--buffer)
-       per-frame-$*-line--buffer
+   (unless (buffer-live-p per-frame-$*-line--buffer)
      (setq per-frame-$*-line--buffer
            (per-frame-$@-line--init-buffer
             (get-buffer-create per-frame-$*-line-buffer-name)))
      (with-current-buffer per-frame-$*-line--buffer
        ;; (buffer-face-set 'per-frame-$*-line-face)
-       (face-remap-add-relative 'default 'per-frame-$*-line-face))
-     per-frame-$*-line--buffer))
+       (face-remap-add-relative 'default 'per-frame-$*-line-face)))
+   per-frame-$*-line--buffer)
 
  (defun per-frame-$*-line--kill-buffer (&optional buf)
    (unless buf
