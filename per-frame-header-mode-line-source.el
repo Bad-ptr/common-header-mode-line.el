@@ -700,7 +700,7 @@ while manipulating $0/$1-line windows."
            (cdr winc) (per-frame-$*-line--check-fix-window frame)))
    display)
 
- (defun per-frame-$*-line--update (&optional frame &rest args)
+ (defun per-frame-$*-line--update (frame &rest args)
    (let ((display (per-frame-$*-line--get-create-display frame)))
      (when display
        (per-frame-$*-line--check-fix-display display)
@@ -713,10 +713,12 @@ while manipulating $0/$1-line windows."
                    cwin))))
        (per-frame-$*-line--update-display display))))
 
- (defun per-frame-$@-line--update (&rest args)
+ (defun per-frame-$@-line--update (frame &rest args)
+   (unless (frame-live-p frame)
+     (setq frame (selected-frame)))
    ($subforms
     (when per-frame-$*-line-mode
-      (apply #'per-frame-$*-line--update (selected-frame) args)))
+      (apply #'per-frame-$*-line--update frame args)))
    t)
 
  (defun per-frame-$*-line--display-buffer-p (b)

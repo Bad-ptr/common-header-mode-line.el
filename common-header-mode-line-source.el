@@ -171,7 +171,8 @@
  ;; TODO: rename to common-$@-line-update-functions
  (defcustom common-$@-line-delayed-update-functions nil
    "List of functions to call to update $@-lines.
-Functions must accept unknown number of arguments."
+Functions must accept unknown number of arguments,
+but the first argument is the frame(which could be dead)."
    :group 'common-$@-line
    :type 'hook
    :set (lambda (sym val)
@@ -191,8 +192,8 @@ Functions must accept unknown number of arguments."
 
 
  (defun common-$@-line--update (&rest args)
-   (run-hook-with-args-until-failure
-    'common-$@-line-delayed-update-functions args))
+   (apply #'run-hook-with-args-until-failure
+		  'common-$@-line-delayed-update-functions args))
 
  (defun common-$@-line--delayed-update (&rest args)
    (unless (timerp common-$@-line--delayed-update-timer)
@@ -202,7 +203,7 @@ Functions must accept unknown number of arguments."
                   (lambda (&rest args)
                     (unwind-protect (apply #'common-$@-line--update args)
                       (setq common-$@-line--delayed-update-timer nil)))
-                  args))))
+                  (cons (selected-frame) args)))))
 
 
  (:autoload
