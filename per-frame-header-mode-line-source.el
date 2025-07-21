@@ -161,7 +161,10 @@ while manipulating $0/$1-line windows."
                     (let ,per-frame-$@-line-emacs-window-hooks-to-inhibit
                       (apply fun args)))))))
 
- (defcustom per-frame-$@-line-advices (list #'window-state-get)
+ (defcustom per-frame-$@-line-advices
+   (list #'window-state-get
+         ;; #'window-state-put
+         )
    "List of functions to activate around advices."
    :group 'per-frame-$@-line
    :type '(repeat symbol)
@@ -322,10 +325,14 @@ Function take frame as argument."
 
 
  (defun per-frame-$*-line-get-window (&optional frame display)
+   (when display (setq frame (cdr (assq 'frame display))))
    (unless display
      (setq display (per-frame-$*-line--get-create-display frame)))
    (when display
-     (cdr (assq 'win display))))
+     (let ((win (cdr (assq 'win display))))
+       (if (window-live-p win)
+           win
+         (window-with-parameter 'per-frame-$*-line-window t frame)))))
 
  (defun per-frame-$*-line-set-window (&optional win frame display)
    (unless display
@@ -549,6 +556,7 @@ Function take frame as argument."
                     (split-height-threshold 2)
                     (window-min-height window-safe-min-height)
                     (window-min-width window-safe-min-width)
+                    (window-combination-resize t)
                     (window-resize-pixelwise t)
                     (buf-display-params (cddr per-frame-$*-line-display-buffer-alist-entry)))
                 (if per-frame-$*-line-display-type
@@ -595,6 +603,8 @@ Function take frame as argument."
            quit-restore-window
            split-window
            per-frame-$*-line-window))
+   (when (eq (window-buffer win) per-frame-$*-line--buffer)
+     (set-window-buffer win (get-scratch-buffer-create)))
    (per-frame-$*-line-set-window nil frame))
 
  (defun per-frame-$*-line--check-fix-window (&optional frame)
@@ -602,7 +612,8 @@ Function take frame as argument."
      (if (run-hook-with-args-until-success
           'per-frame-$@-line-ignore-window-functions win)
          (progn
-           (per-frame-$*-line--giveup-window win frame)
+           (when (window-live-p win)
+             (per-frame-$*-line--giveup-window win frame))
            (setq win (per-frame-$*-line--create-window frame)))
        (per-frame-$@-line--init-window-with-buffer
         win (per-frame-$*-line--get-create-buffer)))
@@ -614,21 +625,15 @@ Function take frame as argument."
    (when (window-live-p win)
      (per-frame-$@-line-with-no-emacs-window-hooks
       (()) ;; (win ())
-      (set-window-dedicated-p win nil)
+      (per-frame-$*-line--giveup-window win frame)
       (let ((per-frame-$@-line--inhibit-delete-window-advice t)
-            need-to-delete)
-        (setq need-to-delete
-              (condition-case _err
-                  (delete-window win)
-                (error t)))
-        (when need-to-delete
-          (let ((ignore-window-parameters t)
-                (window--sides-inhibit-check t))
-            (condition-case err
-                (delete-window win)
-              (error
-               (message "[common-$@-line] Error: per-frame-$*-line--kill-window -- %S"
-                        err))))))))
+            (ignore-window-parameters t)
+            (window--sides-inhibit-check t))
+        (condition-case err
+            (delete-window win)
+          (error
+           (message "[common-$@-line] Error: per-frame-$*-line--kill-window -- %S"
+                    err))))))
    (per-frame-$*-line-set-window nil frame))
 
 
@@ -665,7 +670,7 @@ Function take frame as argument."
  (defun per-frame-$*-line--get-create-display-function (&optional frame)
    (unless frame (setq frame (selected-frame)))
    (let ((display (frame-parameter frame 'per-frame-$*-line-display)))
-     (if (per-frame-$*-line--display-valid-p display)
+     (if display
          display
        (unless (run-hook-with-args-until-success
                 'per-frame-$@-line-ignore-frame-functions frame)
@@ -817,20 +822,26 @@ Function take frame as argument."
                             ($eval (if (eq '${get/put}$ 'get) 0 1))))
                       (frame (window-frame win))
                       ourwin-p)
-                 ($subforms
-                  (when (eq win (per-frame-$*-line-get-window frame))
-                    (setq ourwin-p t)))
+                 (when ($car-> progn or
+                               ($subforms
+                                (eq win (per-frame-$*-line-get-window frame))))
+                   (setq ourwin-p t))
                  (with-suspended-per-frame-$@-line
                   (if ourwin-p
                       ad-do-it
-                    (let ((root-win-p (eq win (frame-root-window frame))))
-                      (per-frame-$@-line-with-no-emacs-window-hooks
-                       (()) ;; (frame ())
+                    (let ((root-win-p (eq win (frame-root-window frame)))
+                          (main-win-p (eq win (window-main-window frame))))
+                      ;; (per-frame-$@-line-with-no-emacs-window-hooks
+                      ;;  (()) ;; (frame ())
                        ($subforms
                         (per-frame-$*-line--kill-display
-                         (frame-parameter frame 'per-frame-$*-line-display))))
-                      (when (and root-win-p (not (window-live-p win)))
-                        (setq win (frame-root-window frame))
+                         (frame-parameter frame 'per-frame-$*-line-display)))
+                       ;; )
+                      (when (setq win
+                                  (or (and root-win-p (not (window-live-p win))
+                                           (frame-root-window frame))
+                                      (and main-win-p (not (window-live-p win))
+                                           (window-main-window frame))))
                         (ad-set-arg
                          ($eval (if (eq '${get/put}$ 'get) 0 1))
                          win))
