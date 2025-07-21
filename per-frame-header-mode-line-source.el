@@ -271,7 +271,7 @@ Function take frame as argument."
    (setq display-buffer-alist
          (delq per-frame-$*-line-display-buffer-alist-entry
                display-buffer-alist))
-   (if remove
+   (if (or remove (null per-frame-$*-line-display-type))
        (setq per-frame-$*-line-display-buffer-alist-entry nil)
      (setq per-frame-$*-line-display-buffer-alist-entry
            `(,(regexp-quote per-frame-$*-line-buffer-name)
