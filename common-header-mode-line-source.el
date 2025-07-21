@@ -124,7 +124,7 @@
 
  (defcustom common-$@-line-force-mode-line-update-functions
    (list #'common-$@-line--delayed-update)
-   "Functions that runs after `fore-mode-line-update'."
+   "Functions that runs after `force-mode-line-update'."
    :group 'common-$@-line
    :type 'hook)
 
