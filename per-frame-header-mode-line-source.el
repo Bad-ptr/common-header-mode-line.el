@@ -122,11 +122,18 @@
 
  (defcustom per-frame-$@-line-ignore-window-functions
    (list (lambda (win) (or (not (window-live-p win))
+                      (not ($car-> progn or
+                                   ($subforms
+                                    (window-parameter win 'per-frame-$*-line-window))))
                       (window-parameter win 'per-frame-$@-line-ignore)
-                      (eq win (window-main-window (window-frame win)))
-                      (and (featurep 'transient)
-                           transient--showp
-                           (eq win transient--window)))))
+                      (and (window-at-side-p win 'left)
+                           (window-at-side-p win 'right)
+                           (window-at-side-p win 'top)
+                           (window-at-side-p win 'bottom))
+                      ;; (and (featurep 'transient)
+                      ;;      transient--showp
+                      ;;      (eq win transient--window))
+                      )))
    "Sometimes Emacs/package reuses our window(argument). We need to respect that.
 If one of these return non nil -- do not touch that window."
    :group 'per-frame-$@-line
