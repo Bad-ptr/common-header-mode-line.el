@@ -226,6 +226,21 @@ while manipulating $0/$1-line windows."
             (when (fboundp 'per-frame-$*-line--recreate-display)
               (per-frame-$*-line--recreate-display)))))
 
+ (defcustom per-frame-$@-line-get-window-to-split-function #'window-main-window
+   "Which window to split when creating window for per-frame-$0/$1-lines.
+Function take frame as argument."
+   :group 'per-frame-$@-line
+   :type '(choice
+           (const :tag "Use frame's main window" :value #'window-main-window)
+           (const :tag "Use frame's root window" :value #'frame-root-window)
+           (function :tag "Custom function" :value (lambda (frame)
+                                                     (frame-first-window frame))))
+   :set (lambda (sym val)
+          (custom-set-default sym val)
+          ($subforms
+           (when (and per-frame-$*-line-mode
+                      (fboundp 'per-frame-$*-line--recreate-display))
+             (per-frame-$*-line--recreate-display)))))
 
  (defvar per-frame-$*-line--buffer nil
    "Buffer used to display $*-line.")
@@ -534,7 +549,9 @@ while manipulating $0/$1-line windows."
                       (display-buffer-in-side-window
                        (or buf (current-buffer))
                        buf-display-params))
-                  (let ((nwin (split-window (frame-root-window frame) -1
+                  (let ((nwin (split-window
+                               (funcall per-frame-$@-line-get-window-to-split-function frame)
+                                            -1
                                             (if (eq 'bottom per-frame-$*-line-window-side)
                                                 'below 'above)))
                         (wps (cdr (assq 'window-parameters buf-display-params))))
