@@ -924,3 +924,7 @@ the frame."
   "
 ;;; per-frame-$@-line.el ends here")
  )
+
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
